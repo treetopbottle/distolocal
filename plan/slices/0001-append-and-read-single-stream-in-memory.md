@@ -1,6 +1,6 @@
 # 0001. Append and read a single stream, in-memory
 
-* Status: planned
+* Status: in-progress
 
 ## Goal
 
