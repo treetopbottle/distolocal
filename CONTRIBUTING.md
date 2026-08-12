@@ -14,7 +14,7 @@ operational rules on top of this — it never restates what's already here.
     [plan/slices/0005-local-node-api-surface.md](plan/slices/0005-local-node-api-surface.md)
     for the real API surface).
 - Before opening a PR, run the same gate CI runs: `cargo fmt --check`,
-  `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test`.
+  `cargo clippy --all-targets -- -D warnings`, `cargo test`.
 
 ## Domain modeling
 

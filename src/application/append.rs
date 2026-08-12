@@ -30,16 +30,18 @@ impl<'a, S: StreamStore> AppendHandler<'a, S> {
 
     #[tracing::instrument(skip(self, command), fields(stream_id = command.stream_id.as_str()))]
     pub fn handle(&self, command: AppendCommand) -> Vec<Position> {
-        let stream_id = command.stream_id.clone();
         let event_count = command.events.len() as u64;
         let positions = self.store.append(&command.stream_id, command.events);
 
         EVENTS_APPENDED.add(
             event_count,
-            &[KeyValue::new("stream.id", stream_id.as_str().to_string())],
+            &[KeyValue::new(
+                "stream.id",
+                command.stream_id.as_str().to_string(),
+            )],
         );
         tracing::debug!(
-            stream_id = stream_id.as_str(),
+            stream_id = command.stream_id.as_str(),
             ?positions,
             "appended events"
         );

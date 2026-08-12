@@ -17,6 +17,10 @@ impl InMemoryStreamStore {
 
 impl StreamStore for InMemoryStreamStore {
     fn append(&self, stream_id: &StreamId, events: Vec<Event>) -> Vec<Position> {
+        if events.is_empty() {
+            return Vec::new();
+        }
+
         let mut streams = self.streams.lock().unwrap();
         let stream = streams.entry(stream_id.clone()).or_default();
         let mut positions = Vec::with_capacity(events.len());

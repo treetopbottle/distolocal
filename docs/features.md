@@ -23,13 +23,13 @@ Entity: [docs/spec.md#stream](spec.md#stream)
 
 | Command | Status | Slice | Notes |
 |---|---|---|---|
-| [Append](spec.md#append) | Done | [0001](../plan/slices/0001-append-and-read-single-stream-in-memory.md), [0002](../plan/slices/0002-expected-version-check-on-append.md) | 0001 covers append with no expected version. Expected-version (optimistic concurrency) check added in 0002. |
+| [Append](spec.md#append) | In progress | [0001](../plan/slices/0001-append-and-read-single-stream-in-memory.md), [0002](../plan/slices/0002-expected-version-check-on-append.md) | 0001 (done) covers append with no expected version. Expected-version (optimistic concurrency) check added in 0002 (planned). |
 
 ### Queries
 
 | Query | Status | Slice | Notes |
 |---|---|---|---|
-| [ReadStream](spec.md#readstream) | Done | [0001](../plan/slices/0001-append-and-read-single-stream-in-memory.md), [0003](../plan/slices/0003-read-stream-from-position.md) | 0001 covers reading from the start. Reading from a given position added in 0003. |
+| [ReadStream](spec.md#readstream) | In progress | [0001](../plan/slices/0001-append-and-read-single-stream-in-memory.md), [0003](../plan/slices/0003-read-stream-from-position.md) | 0001 (done) covers reading from the start. Reading from a given position added in 0003 (planned). |
 | [ListStreams](spec.md#liststreams) | Planned | [0006](../plan/slices/0006-list-streams.md) | |
 | [Subscribe](spec.md#subscribe) | Planned | [0007](../plan/slices/0007-catch-up-subscription.md) | |
 

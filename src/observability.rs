@@ -11,7 +11,7 @@ use tracing_subscriber::{EnvFilter, Registry};
 
 pub fn init() {
     let tracer_provider = SdkTracerProvider::builder()
-        .with_simple_exporter(opentelemetry_stdout::SpanExporter::default())
+        .with_batch_exporter(opentelemetry_stdout::SpanExporter::default())
         .build();
     let meter_provider = SdkMeterProvider::builder()
         .with_periodic_exporter(opentelemetry_stdout::MetricExporter::default())
@@ -19,7 +19,9 @@ pub fn init() {
 
     let tracer = tracer_provider.tracer("distolocal");
     let otel_layer = tracing_opentelemetry::layer().with_tracer(tracer);
-    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug"));
+    let filter = EnvFilter::builder()
+        .with_default_directive(tracing::level_filters::LevelFilter::DEBUG.into())
+        .from_env_lossy();
 
     Registry::default()
         .with(filter)
