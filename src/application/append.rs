@@ -1,7 +1,7 @@
 use std::sync::LazyLock;
 
-use opentelemetry::metrics::Counter;
 use opentelemetry::KeyValue;
+use opentelemetry::metrics::Counter;
 
 use crate::domain::stream::{Event, Position, StreamId};
 use crate::infrastructure::storage::StreamStore;
@@ -38,7 +38,11 @@ impl<'a, S: StreamStore> AppendHandler<'a, S> {
             event_count,
             &[KeyValue::new("stream.id", stream_id.as_str().to_string())],
         );
-        tracing::debug!(stream_id = stream_id.as_str(), ?positions, "appended events");
+        tracing::debug!(
+            stream_id = stream_id.as_str(),
+            ?positions,
+            "appended events"
+        );
 
         positions
     }
