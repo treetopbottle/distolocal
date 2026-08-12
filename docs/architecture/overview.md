@@ -24,7 +24,9 @@ are tested against (see [CONTRIBUTING.md](../../CONTRIBUTING.md)).
 ## Observability
 
 Metrics, logs, and traces are cross-cutting and instrumented per-slice, not bolted on
-afterward. Concrete stack choice is pending an ADR.
+afterward. Stack: `tracing` for logs/spans, bridged via `tracing-opentelemetry` into an
+OpenTelemetry pipeline (traces + metrics), exporter TBD per deployment — see
+[ADR-0004](decisions/0004-observability-stack.md).
 
 ## Slices vs. modules
 
