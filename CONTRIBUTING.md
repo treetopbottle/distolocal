@@ -5,9 +5,16 @@ operational rules on top of this — it never restates what's already here.
 
 ## Getting started
 
-No code yet — there's nothing to build, run, or test. Once the first slice
-([plan/slices/0001-append-and-read-single-stream-in-memory.md](plan/slices/0001-append-and-read-single-stream-in-memory.md))
-lands, this section becomes: clone, install, build, run the approval tests.
+- Install Rust via [rustup](https://rustup.rs).
+- Clone the repo, then from the repo root:
+  - `cargo build` — build the `distolocal` binary.
+  - `cargo test` — run the approval test suite.
+  - `cargo run` — run the binary (currently a thin demo wiring the in-memory
+    adapter into the Append/ReadStream handlers; see
+    [plan/slices/0005-local-node-api-surface.md](plan/slices/0005-local-node-api-surface.md)
+    for the real API surface).
+- Before opening a PR, run the same gate CI runs: `cargo fmt --check`,
+  `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test`.
 
 ## Domain modeling
 
