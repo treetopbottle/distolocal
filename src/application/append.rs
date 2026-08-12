@@ -1,5 +1,18 @@
+use std::sync::LazyLock;
+
+use opentelemetry::metrics::Counter;
+use opentelemetry::KeyValue;
+
 use crate::domain::stream::{Event, Position, StreamId};
 use crate::infrastructure::storage::StreamStore;
+
+/// Count of events appended, per stream. See slice 0001's Observability section.
+static EVENTS_APPENDED: LazyLock<Counter<u64>> = LazyLock::new(|| {
+    opentelemetry::global::meter("distolocal")
+        .u64_counter("events_appended")
+        .with_description("Count of events appended, per stream")
+        .build()
+});
 
 pub struct AppendCommand {
     pub stream_id: StreamId,
@@ -15,7 +28,18 @@ impl<'a, S: StreamStore> AppendHandler<'a, S> {
         Self { store }
     }
 
+    #[tracing::instrument(skip(self, command), fields(stream_id = command.stream_id.as_str()))]
     pub fn handle(&self, command: AppendCommand) -> Vec<Position> {
-        self.store.append(&command.stream_id, command.events)
+        let stream_id = command.stream_id.clone();
+        let event_count = command.events.len() as u64;
+        let positions = self.store.append(&command.stream_id, command.events);
+
+        EVENTS_APPENDED.add(
+            event_count,
+            &[KeyValue::new("stream.id", stream_id.as_str().to_string())],
+        );
+        tracing::debug!(stream_id = stream_id.as_str(), ?positions, "appended events");
+
+        positions
     }
 }

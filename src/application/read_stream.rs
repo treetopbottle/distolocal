@@ -1,4 +1,4 @@
-use crate::domain::stream::{StoredEvent, StreamId};
+use crate::domain::stream::{Position, StoredEvent, StreamId};
 use crate::infrastructure::storage::StreamStore;
 
 pub struct ReadStreamQuery {
@@ -14,7 +14,14 @@ impl<'a, S: StreamStore> ReadStreamHandler<'a, S> {
         Self { store }
     }
 
+    #[tracing::instrument(skip(self, query), fields(stream_id = query.stream_id.as_str()))]
     pub fn handle(&self, query: ReadStreamQuery) -> Vec<StoredEvent> {
-        self.store.read(&query.stream_id)
+        let stream_id = query.stream_id.clone();
+        let events = self.store.read(&query.stream_id);
+        let positions: Vec<Position> = events.iter().map(|stored| stored.position).collect();
+
+        tracing::debug!(stream_id = stream_id.as_str(), ?positions, "read stream");
+
+        events
     }
 }

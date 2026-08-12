@@ -3,7 +3,11 @@ use distolocal::application::read_stream::{ReadStreamHandler, ReadStreamQuery};
 use distolocal::domain::stream::{Event, StreamId};
 use distolocal::infrastructure::storage::in_memory::InMemoryStreamStore;
 
+mod observability;
+
 fn main() {
+    observability::init();
+
     let store = InMemoryStreamStore::new();
     let append = AppendHandler::new(&store);
     let read = ReadStreamHandler::new(&store);
