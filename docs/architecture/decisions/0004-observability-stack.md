@@ -55,11 +55,13 @@ from the plan). `tracing-opentelemetry` bridges those spans into OpenTelemetry t
 OpenTelemetry `Counter`/`Gauge` instruments (via the `opentelemetry` crate's metrics API) back
 the metric signal — e.g. slice 0001's "count of events appended per stream" is an OTel
 `Counter<u64>` incremented in the `Append` handler, labeled by stream ID. `opentelemetry_sdk`
-provides the SDK implementation, and an OTLP exporter (`opentelemetry-otlp`) is wired in;
-until a collector/backend is deployed, it can point at a no-op/stdout exporter so the
-instrumentation compiles and runs without requiring infrastructure the project doesn't have
-yet. Backend choice (which collector, which dashboard) is explicitly deferred — this ADR only
-fixes the emission format and in-code API.
+provides the SDK implementation. Until a collector/backend is deployed, exporters point at
+stdout (`opentelemetry-stdout`) so the instrumentation compiles and runs without requiring
+infrastructure the project doesn't have yet; swapping in a real exporter (e.g.
+`opentelemetry-otlp`, added as a dependency at that point) is a configuration change at the
+`observability` module's init site, not a re-instrumentation of handlers. Backend choice
+(which collector, which dashboard, which exporter crate) is explicitly deferred — this ADR
+only fixes the emission format (OpenTelemetry) and in-code API (`tracing`).
 
 ### Consequences
 
