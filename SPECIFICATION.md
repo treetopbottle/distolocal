@@ -14,10 +14,12 @@ _Possible inspiration: CloudEvents._
 {
   "event_id": "uuid",
   "stream_id": "string",
-  "type": "string", // e.g., "ToDoFinished"
+  "sequence_number": "int",
+  "source_node": "uuid", // Where the event was created
+  "type": "string", // Example: "ToDoFinished"
   "timestamp": "ISO8601",
-  "data": { "todo_id": "uuid", "status": "completed" },
-  "metadata" { "schema_version": "1.7.2" },
+  "data": { "todo_id": "uuid", "status": "string" },
+  "metadata": { "schema_version": "string" },
 }
 ```
 
@@ -31,8 +33,9 @@ Organized by components.
 - Create Stream
 - Create Event: Todo application sends ToDoFinished event to event store for the chores event Stream.
 - Read all Events in a Stream
-- Read all Events in a Node
-- Close a Stream (closing the books pattern)
+- Read all Events in an Application
+- Read all Streams in an Application
+- Close a Stream (summarize events)
 
 ### Stream subscription
 
@@ -41,6 +44,8 @@ _To be added._
 ### Node replication
 
 _To be added._
+
+TODO: Decide how to handle concurrent writes. The `sequence_number` in the Event schema does not work when two Nodes write to the same stream. One idea: make a Node the owner of a Stream. Then the Application can decide if concurrent events are allowed because can be reconciled later or if you need an active connection to that Node to order the events as they come in. Possibly an owner hierarchy: if the original owner Node is not available then other Nodes should be able to decide to reconcile events or decide to fork the Stream and continue cooperation. A vector clock could be a good method to detect concurrent events.
 
 
 ## Interaction design
