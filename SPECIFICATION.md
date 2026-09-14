@@ -40,14 +40,17 @@ Annabel marks "Take out the trash" as done [Append Event].
 
 A while later, Annabel reopens the Todo app. It reads the full Stream to reconstruct her chores list, showing one open and one finished chore [Read Stream].
 
-Annabel is marks the whole "Chores" list as finished, so the app closes the "Chores" Stream [Close Stream].
+Annabel is marks the whole "Chores" list as finished. The app computes a summary of how many chores were completed and appends it to a "ChoresHistory" Stream [Append Event], then closes the "Chores" Stream [Close Stream].
+
+After a week, the Todo app cleans up the finished "Chores" list, deleting the Stream entirely [Delete Stream].
 
 [Create Stream]: #feature-create-stream
 [Append Event]: #feature-append-event
 [Read Stream]: #feature-read-stream
 [Close Stream]: #feature-close-stream
+[Delete Stream]: #feature-delete-stream
 
-#### Create Stream
+#### Feature: Create Stream
 
 **Rule: idempotent — creating a Stream that already exists returns it unchanged, rather than erroring**
 
@@ -65,7 +68,7 @@ When the Todo app, running on a second device, creates a Stream "Lists"
 Then it succeeds again, returning the existing "Lists" Stream unchanged
 ```
 
-#### Append Event
+#### Feature: Append Event
 
 Validates Event shape only, not application-level meaning (e.g. it does not check that a referenced `todo_id` exists).
 
@@ -107,7 +110,6 @@ Given the Stream "Chores" contains: [TodoCreated#1]
 When the Todo app appends TodoCreated(todo_id=2, title="Wash the dishes") to "Chores" twice, both times using the same envelope event_id=X
 Then the Stream "Chores" contains TodoCreated#2 exactly once
 ```
-_Rationale: needed because the Todo app can't always tell whether a write landed before a crash._
 
 **Rule: rejected with a `StreamClosed` error if the target Stream is closed**
 
@@ -136,7 +138,7 @@ When the Todo app restarts
 Then it appends TodoCreated(todo_id=1, ...) rather than creating "Chores" again
 ```
 
-#### Read Stream
+#### Feature: Read Stream
 
 **Rule: returns all Events in append order**
 
@@ -170,23 +172,70 @@ When the Todo app reads all Events in "Groceries"
 Then the read fails with a StreamNotFound error
 ```
 
-#### Close Stream
+#### Feature: Close Stream
 
 **Rule: idempotent — closing an already-closed Stream is a no-op**
 
-**`CloseStream.01`** Closing an open Stream
+**`CloseStream.01`** Closing an already-closed Stream
+```
+Given the Stream "Chores" is closed
+When the Todo app closes "Chores" again
+Then it succeeds again with no error
+```
+
+**`CloseStream.02`** Closing an open Stream
 ```
 Given the Stream "Chores" contains: [TodoCreated#1, TodoCreated#2, TodoFinished#1]
 When the Todo app closes the Stream "Chores"
 Then the Stream "Chores" is closed; its Events are unchanged and still readable
 ```
 
-**`CloseStream.02`** Closing an already-closed Stream
+#### Feature: Delete Stream
+
+**Rule: only allowed on a closed Stream**
+
+**`DeleteStream.01`** Deleting an open Stream
 ```
-Given the Stream "Chores" is closed
-When the Todo app closes "Chores" again
+Given the Stream "Chores" is open and contains: [TodoCreated#1, TodoCreated#2]
+When the Todo app deletes the Stream "Chores"
+Then it fails with a StreamNotClosed error
+```
+
+**Rule: deletes every Event in the Stream and the Stream itself**
+
+**`DeleteStream.02`** Deleting a closed Stream
+```
+Given the Stream "Chores" is closed and contains: [TodoCreated#1, TodoCreated#2, TodoFinished#1]
+When the Todo app deletes the Stream "Chores"
+Then the Stream "Chores" no longer exists
+```
+
+**`DeleteStream.03`** Deleting a Stream that has a summary in a separate Stream
+```
+Given the Todo app appended ChoresSummarized(total=2, completed=1) to the Stream "ChoresHistory" before closing the Stream "Chores"
+When the Todo app deletes the Stream "Chores"
+Then the Stream "Chores" no longer exists, but the Stream "ChoresHistory" is untouched and still contains: [ChoresSummarized]
+```
+
+**Rule: idempotent — deleting a Stream that no longer exists succeeds with no error**
+
+**`DeleteStream.04`** Deleting an already-deleted Stream
+```
+Given the Stream "Chores" was already deleted
+When the Todo app deletes the Stream "Chores" again
 Then it succeeds again with no error
 ```
+
+#### Pattern: closing the books
+
+"Closing the books" — computing a rollup of a Stream's history instead of keeping every individual Event, e.g. a cashier totaling a day's transactions instead of keeping every line item sold — needs no dedicated Store feature. It composes entirely from the primitives above, with the application owning both the summarization logic and the sequencing:
+
+1. [Create Stream] a summary Stream (if it doesn't already exist) to hold the rollup, e.g. "ChoresHistory".
+2. [Append Event] the summary Event(s) to it, computed however the application sees fit.
+3. [Close Stream] the original Stream.
+4. Once the summary no longer needs to be paired 1:1 with the original — whenever the application decides — [Delete Stream] the original to reclaim space; the summary Stream is untouched.
+
+None of these steps need to be atomic with each other: a Stream that's closed but not yet summarized, or summarized but not yet deleted, is still fully valid and readable throughout — see `DeleteStream.03`.
 
 
 ### Stream subscription
