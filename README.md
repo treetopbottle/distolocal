@@ -4,7 +4,7 @@ Distributed event storage.
 
 This is a specification of the software using a why? who? what? approach. Where possible, specification by example is used.
 
-_To do: decide on styling of domain entities (capitalize?) and examples (italics paragraph?)._
+_To do: decide on styling of domain entities (capitalize? fixed width font?) and examples (italics? marked with "Example:"?)._
 
 ## Why?
 
@@ -15,9 +15,9 @@ Vision: Developers building local-first apps adopt this store instead of buildin
 
 ## Who? (roles)
 
-- Application users; Annabel user of Todo application
-- Synchronization admins
-- Developers
+- Application user; Annabel, user of Todo app
+- Synchronization manager; Annabel, make the Todo app events available to Claire
+- Developer; Debby, works on Todo app
 
 
 ## What? (domain entities)
@@ -26,16 +26,22 @@ These are the domain entities. The convention is to capitalize them.
 
 - Event - A single record of state change; ToDoFinished Event
 - Stream - A collection of Events in order of occurrence; Chores Stream
-- Application - A client application running locally that directly uses the event store; To do app
-- Node - A remote server that can receive events (push or pull) and replicate them; Family Todo Node
+- Application - A client application that uses multiple Streams to store its data; Todo app
+- Node - A server providing the event store; Local node for Todo app
+  + One Node per Application, no multi tenancy (yet)
+  + Data can be replicated to other nodes
 
 ## Core use cases (components)
 
 - Event and Stream management
     + Create Event; create Stream; read Events in Stream; close Stream
+    + Event data is opaque to Distolocal
 - Stream subscription
     + Push Event; Event hooks
+    + Builds on Event and Stream management
 - Replicate to Node
-    + Add Node; Remove Node
+    + Add Node; Remove Node; View replication lag
+    + Builds on Stream subscription
+    + Version conflicts and data merges are handled by the Application, not Distolocal
 
 For detailed specifications, see [SPECIFICATION.md](SPECIFICATION.md).

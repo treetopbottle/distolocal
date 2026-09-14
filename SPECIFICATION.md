@@ -279,6 +279,8 @@ _To be added._
 
 _To be added._
 
+TODO: Decide how to handle concurrent writes. The `sequence_number` in the Event schema does not work when two Nodes write to the same stream. One idea: make a Node the owner of a Stream. Then the Application can decide if concurrent events are allowed because can be reconciled later or if you need an active connection to that Node to order the events as they come in. Possibly an owner hierarchy: if the original owner Node is not available then other Nodes should be able to decide to reconcile events or decide to fork the Stream and continue cooperation. A vector clock could be a good method to detect concurrent events.
+
 
 ## Interaction design
 
