@@ -88,3 +88,20 @@ Node replication concern, not something these primitives handle.
   writers race against the *same* Node (not just across Nodes) — that case
   isn't covered by this decision or by 0002/0003 yet and needs an explicit
   answer.
+
+## 0006 — Concurrent writers to the same Stream at the same Node
+
+Undecided · 2026-09-14 · Domain · relates to 0005
+
+0005 scopes Create/Append/Read/Close/Delete Stream to a single writer per
+Stream, but leaves open what happens when two writers race against the *same*
+Node for the *same* Stream — distinct from the cross-Node case that 0002/0003
+already cover.
+
+- **Why:** tracked as its own entry so this doesn't stay an implicit loose end
+  buried in 0005's Cost line.
+- **Open options:** reject the losing writer with an optimistic-concurrency
+  error (caller supplies the `sequence_number` it expected to append after);
+  serialize writes to a Stream behind a per-Stream lock at the Node. Silently
+  picking a winner (last-write-wins) conflicts with 0002's stance against the
+  Store discarding data.

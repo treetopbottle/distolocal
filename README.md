@@ -24,7 +24,7 @@ Vision: Developers building local-first apps adopt this store instead of buildin
 
 These are the domain entities. The convention is to capitalize them.
 
-- Event - A single record of state change; ToDoFinished Event
+- Event - A single record of state change; TodoFinished Event
 - Stream - A collection of Events in order of occurrence; Chores Stream
 - Application - A client application that uses multiple Streams to store its data; Todo app
 - Node - A server providing the event store; Local node for Todo app
@@ -34,12 +34,12 @@ These are the domain entities. The convention is to capitalize them.
 ## Core use cases (components)
 
 - Event and Stream management
-    + Create Event; create Stream; read Events in Stream; close Stream
+    + Append Event; create Stream; read Events in Stream; close Stream; delete Stream
     + Event data is opaque to Distolocal
 - Stream subscription
     + Push Event; Event hooks
     + Builds on Event and Stream management
-- Replicate to Node
+- Node replication
     + Add Node; Remove Node; View replication lag
     + Builds on Stream subscription
     + Version conflicts and data merges are handled by the Application, not Distolocal
