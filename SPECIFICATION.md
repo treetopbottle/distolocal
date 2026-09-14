@@ -23,6 +23,28 @@ _Possible inspiration: CloudEvents._
 
 Both `event_id` and `stream_id` are assigned by the Application, not the Store. The Store never generates identifiers on the caller's behalf — it only validates and stores what it's given.
 
+### Stream
+
+_Initial suggestion — not yet validated against Stream subscription or Node replication needs._
+
+```jsonc
+{
+  "stream_id": "string", // sole identifier, chosen by the Application when it creates the Stream
+  "status": "open | closed", // see Close Stream; a deleted Stream simply no longer exists
+  "created_at": "ISO8601"
+}
+```
+
+### Errors
+
+Errors returned by the Store's Event and Stream management features.
+
+| Error | Raised when |
+|---|---|
+| `StreamNotFound` | Append or Read is called on a Stream that was never created |
+| `StreamClosed` | Append is called on a Stream that is closed |
+| `StreamNotClosed` | Delete is called on a Stream that is still open |
+
 
 ## Features per component
 
@@ -66,7 +88,7 @@ Then a Stream "Lists" exists, containing no Events
 **`CreateStream.02`** Creating a Stream that already exists
 ```
 Given a Stream "Lists" already exists, containing: []
-When the Todo app, running on a second device, creates a Stream "Lists"
+When the Todo app creates a Stream "Lists" again
 Then it succeeds again, returning the existing "Lists" Stream unchanged
 ```
 
