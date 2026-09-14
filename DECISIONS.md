@@ -50,6 +50,17 @@ vector clock keyed by `source_node`.
   connection) — simpler, but no offline collaboration. Owner hierarchy with
   fallback reconciliation or Stream fork — more resilient, much more complex.
 
+
+Related note: The `sequence_number` in the Event schema does not work when two
+Nodes write to the same stream. One idea: make a Node the owner of a Stream.
+Then the Application can decide if concurrent events are allowed because can be
+reconciled later or if you need an active connecti on to that Node to order the
+events as they come in. Possibly an owner hierarchy: if the original owner No
+de is not available then other Nodes should be able to decide to reconcile
+events or decide to fork the St ream and continue cooperation. A vector clock
+could be a good method to detect concurrent events.
+
+
 ## 0004 — Implementation language
 
 Undecided · 2026-09-08 · Technical
