@@ -58,3 +58,22 @@ Depends on the delivery model: embeddable library, standalone Node process, or
 both. Other forces: single static binary for easy local install, predictable
 replication latency, target platforms (desktop, server, WASM?). Decide the
 delivery model first.
+
+## 0005 — Event and Stream management assumes a single writer per Stream
+
+Accepted · 2026-09-14 · Domain · relates to 0002, 0003
+
+The Event and Stream management features (Create/Append/Read/Close/Delete
+Stream) are specified assuming only one writer touches a given Stream at a
+time. Detecting and reconciling concurrent writes to the same Stream — e.g.
+two Nodes appending independently while both were offline — is entirely a
+Node replication concern, not something these primitives handle.
+
+- **Why:** keeps the core Store operations simple to specify and test in
+  isolation from the harder distributed-writes problem, which is addressed
+  separately in 0002 (Applications resolve conflicts) and 0003 (vector clocks
+  detect them).
+- **Cost:** the primitives as specified don't say what happens when two
+  writers race against the *same* Node (not just across Nodes) — that case
+  isn't covered by this decision or by 0002/0003 yet and needs an explicit
+  answer.
