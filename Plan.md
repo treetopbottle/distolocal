@@ -34,7 +34,7 @@ are separate, later concerns.
 
 ---
 
-### Step 1 — Scaffold the Rust crate; record the language decision
+### Step 1 — Scaffold the Rust crate; record the language decision [DONE]
 
 No behavior to test yet, so this step is a single commit:
 

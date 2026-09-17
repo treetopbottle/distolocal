@@ -63,12 +63,18 @@ could be a good method to detect concurrent events.
 
 ## 0004 — Implementation language
 
-Undecided · 2026-09-08 · Technical
+Accepted · 2026-09-17 · Technical
 
-Depends on the delivery model: embeddable library, standalone Node process, or
-both. Other forces: single static binary for easy local install, predictable
-replication latency, target platforms (desktop, server, WASM?). Decide the
-delivery model first.
+Rust, as a single library crate for now (`cargo new --lib distolocal`).
+
+- **Why:** We pick Rust for several reasons. First and foremost, we want to
+  learn Rust. Additionally, it is a good fit for systems programming, for
+  example because it compiles to a single static binary, it has predictable
+  latency, and desktop/server/WASM targets are all plausible.
+- **Deferred:** the embeddable-library vs. standalone-Node-process split (and
+  whether that needs a workspace with a separate binary crate) is put off
+  until Node replication needs it. This entry can be revisited then if the
+  split changes the crate layout.
 
 ## 0005 — Event and Stream management assumes a single writer per Stream
 
