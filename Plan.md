@@ -45,8 +45,6 @@ No behavior to test yet, so this step is a single commit:
   `cargo test` runs in this environment.
 - No production code yet.
 
-**Commit:** "Scaffold Rust crate; accept language decision (Rust)"
-
 ### Step 2 — Domain types: Event, Stream, Error [DONE]
 
 No behavior or invariants yet — `Event`/`Stream`/`Error` are plain data with
@@ -65,8 +63,6 @@ already verifies for free. Skipped the tests split for this step:
 
 No Store yet.
 
-**Commit:** "Define core data structures"
-
 ### Step 3 — Create Stream: new and idempotent-open
 
 - **3a (tests):** `CreateStream.01` (create a Stream that doesn't exist),
@@ -76,9 +72,6 @@ No Store yet.
   calls used.
   → **checkpoint.**
 - **3b (implementation):** introduce `Store`, implement `create_stream`.
-
-**Commits:** "Add tests for CreateStream: new and idempotent-open" →
-"Implement CreateStream: new and idempotent-open cases"
 
 ### Step 4 — Append Event: ordering and StreamNotFound
 
@@ -106,9 +99,6 @@ No Store yet.
 - **5b (implementation):** add idempotency-by-`event_id` and shape validation
   to `append_event`.
 
-**Commits:** "Add tests for AppendEvent: idempotency and validation" →
-"Implement AppendEvent: idempotency and validation errors"
-
 ### Step 6 — Read Stream
 
 - **6a (tests):** `ReadStream.01` (returns events in append order),
@@ -117,8 +107,6 @@ No Store yet.
   → **checkpoint.**
 - **6b (implementation):** implement `read_stream`.
 
-**Commits:** "Add tests for ReadStream" → "Implement ReadStream"
-
 ### Step 7 — Close Stream
 
 - **7a (tests):** `CloseStream.01` (closing an already-closed Stream is a
@@ -126,8 +114,6 @@ No Store yet.
   (`StreamNotFound` for a Stream that was never created).
   → **checkpoint.**
 - **7b (implementation):** implement `close_stream`.
-
-**Commits:** "Add tests for CloseStream" → "Implement CloseStream"
 
 ### Step 8 — Enforce StreamClosed across Append/Read/Create
 
@@ -142,9 +128,6 @@ it:
 - **8b (implementation):** add the closed-Stream checks to
   `append_event`/`read_stream`/`create_stream`.
 
-**Commits:** "Add tests for StreamClosed across Append/Read/Create" →
-"Enforce StreamClosed across Append/Read/Create"
-
 ### Step 9 — Delete Stream
 
 - **9a (tests):** `DeleteStream.01` (`StreamNotClosed` when deleting an open
@@ -153,8 +136,6 @@ it:
   succeeds).
   → **checkpoint.**
 - **9b (implementation):** implement `delete_stream`.
-
-**Commits:** "Add tests for DeleteStream" → "Implement DeleteStream"
 
 ### Step 10 — Delete/Create interplay across Streams
 
@@ -167,9 +148,6 @@ it:
   step should mostly just confirm existing behavior — a good sign if 10b ends
   up empty).
 
-**Commits:** "Add tests for Delete/Create interplay" → "Verify Delete/Create
-interplay across independent Streams"
-
 ### Step 11 — End-to-end narrative test
 
 - **11a (tests):** one integration test walking through the full "Annabel and
@@ -180,8 +158,6 @@ interplay across independent Streams"
 - **11b:** this test should already pass against steps 1–10's implementation
   — if it doesn't, that's a sign a rule was missed earlier, not a new
   feature to build.
-
-**Commits:** "Add end-to-end narrative test"
 
 ---
 
