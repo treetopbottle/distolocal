@@ -47,20 +47,25 @@ No behavior to test yet, so this step is a single commit:
 
 **Commit:** "Scaffold Rust crate; accept language decision (Rust)"
 
-### Step 2 — Domain types: Event, Stream, Error
+### Step 2 — Domain types: Event, Stream, Error [DONE]
 
-- **2a (tests):** write construction/field tests that pin down the shape of
-  `Event` and `Stream` (matching the schemas in SPECIFICATION.md) and the
-  `Error` enum's five variants (`StreamNotFound`, `StreamClosed`,
-  `StreamNotClosed`, `EventIdConflict`, `InvalidEvent`). `data`/`metadata` are
-  opaque to Distolocal — proposed as `serde_json::Value` (new dependency:
-  `serde`, `serde_json`) — flag here if you'd rather keep them as raw bytes or
-  a generic type param.
-  → **checkpoint: review field names/types before implementing.**
-- **2b (implementation):** define the types to make 2a pass. No Store yet.
+No behavior or invariants yet — `Event`/`Stream`/`Error` are plain data with
+no methods, so a construction test would only check what `cargo build`
+already verifies for free. Skipped the tests split for this step:
 
-**Commits:** "Add tests for Event/Stream/Error types" → "Add Event, Stream,
-Error domain types"
+- `Event`: `event_id`, `stream_id`, `vector_clock: HashMap<node_id, u64>`
+  (adopted directly per DECISIONS.md 0003, in place of a `sequence_number`
+  field), `event_type`, `timestamp`, and opaque `data`/`metadata: Vec<u8>`
+  (per DECISIONS.md 0007 — raw bytes, not the `serde_json::Value` originally
+  proposed here).
+- `Stream`: `stream_id`, `status` (`Open`/`Closed`), `created_at`.
+- `Error`: the five variants (`StreamNotFound`, `StreamClosed`,
+  `StreamNotClosed`, `EventIdConflict`, `InvalidEvent`), each carrying the
+  ids needed to describe the failure.
+
+No Store yet.
+
+**Commit:** "Define core data structures"
 
 ### Step 3 — Create Stream: new and idempotent-open
 
@@ -78,7 +83,8 @@ Error domain types"
 ### Step 4 — Append Event: ordering and StreamNotFound
 
 - **4a (tests):** `AppendEvent.01`–`.04` (events land at the end, in order,
-  with `sequence_number` assigned by the Store), `AppendEvent.09`
+  with the Store incrementing each Event's `vector_clock` entry for its own
+  node), `AppendEvent.09`
   (`StreamNotFound` when the Stream was never created).
   Note: `AppendEvent.08` needs no dedicated test — it documents an
   application-level habit (don't re-create a Stream you already created)

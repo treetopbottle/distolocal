@@ -34,12 +34,13 @@ the caller.
 - **Cost:** Applications must supply merge logic; higher adoption cost for
   simple apps. We still owe a concurrency-detection mechanism (0003).
 
-## 0003 — Detect concurrent Events with vector clocks
+## 0003 — Replace sequence_number with a vector clock on Event
 
-Proposed · 2026-09-08 · Technical · relates to 0002
+Accepted · 2026-09-18 · Technical · relates to 0002, 0005
 
-Augment or replace the single-integer `sequence_number` with a per-Stream
-vector clock keyed by `source_node`.
+Replace the single-integer `sequence_number` with a per-Stream vector clock,
+`Event.vector_clock: Map<node_id, u64>` — one counter per Node that has
+appended to the Stream.
 
 - **Why:** `sequence_number` breaks when two Nodes append to one Stream. Vector
   clocks order Events within a Stream and flag genuine concurrency for the
@@ -49,16 +50,12 @@ vector clock keyed by `source_node`.
 - **Alternatives:** Stream ownership (one Node owns a Stream, others need a live
   connection) — simpler, but no offline collaboration. Owner hierarchy with
   fallback reconciliation or Stream fork — more resilient, much more complex.
-
-
-Related note: The `sequence_number` in the Event schema does not work when two
-Nodes write to the same stream. One idea: make a Node the owner of a Stream.
-Then the Application can decide if concurrent events are allowed because can be
-reconciled later or if you need an active connecti on to that Node to order the
-events as they come in. Possibly an owner hierarchy: if the original owner No
-de is not available then other Nodes should be able to decide to reconcile
-events or decide to fork the St ream and continue cooperation. A vector clock
-could be a good method to detect concurrent events.
+- **Scope note:** adopted into the `Event` type now (see Plan.md step 2),
+  ahead of Node replication, so the schema doesn't need a breaking change
+  later. Under 0005's single-writer-per-Stream assumption the map holds
+  exactly one entry — the appending Node's own counter — and behaves like a
+  plain position counter; the concurrency-detection payoff (comparing clocks
+  across Nodes) only activates once Node replication lands.
 
 
 ## 0004 — Implementation language
@@ -97,7 +94,7 @@ Node replication concern, not something these primitives handle.
 
 ## 0006 — Concurrent writers to the same Stream at the same Node
 
-Undecided · 2026-09-14 · Domain · relates to 0005
+Undecided · 2026-09-14 · Domain · relates to 0003, 0005
 
 0005 scopes Create/Append/Read/Close/Delete Stream to a single writer per
 Stream, but leaves open what happens when two writers race against the *same*
@@ -107,10 +104,10 @@ already cover.
 - **Why:** tracked as its own entry so this doesn't stay an implicit loose end
   buried in 0005's Cost line.
 - **Open options:** reject the losing writer with an optimistic-concurrency
-  error (caller supplies the `sequence_number` it expected to append after);
-  serialize writes to a Stream behind a per-Stream lock at the Node. Silently
-  picking a winner (last-write-wins) conflicts with 0002's stance against the
-  Store discarding data.
+  error (caller supplies the `vector_clock` count it expected to append
+  after); serialize writes to a Stream behind a per-Stream lock at the Node.
+  Silently picking a winner (last-write-wins) conflicts with 0002's stance
+  against the Store discarding data.
 
 ## 0007 — Distolocal supports multiple wire protocols; payload encoding follows the call's protocol
 
