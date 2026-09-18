@@ -349,6 +349,8 @@ _To be added._
 ### APIs
 
 _To be added. Includes protocols (HTTP, gRPC, etc.). Also internal APIs?_
+See DECISIONS.md 0007 for the multi-protocol/payload-encoding decision this
+will build on.
 
 
 ## Metrics

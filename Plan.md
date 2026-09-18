@@ -188,5 +188,8 @@ feature-complete against SPECIFICATION.md. Next slices, not covered here:
 - Stream subscription (push/hooks) — builds on this.
 - Node replication, and the still-open questions in DECISIONS.md 0003/0006
   (vector clocks, concurrent writers to the same Stream at the same Node).
+- A public API protocol (JSON first; gRPC/Avro anticipated — see
+  DECISIONS.md 0007). Today the only "API" is the Store's Rust function
+  calls used directly by these tests.
 
 Don't start those until this slice is reviewed and merged.

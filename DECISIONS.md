@@ -111,3 +111,21 @@ already cover.
   serialize writes to a Stream behind a per-Stream lock at the Node. Silently
   picking a winner (last-write-wins) conflicts with 0002's stance against the
   Store discarding data.
+
+## 0007 — Distolocal supports multiple wire protocols; payload encoding follows the call's protocol
+
+Accepted · 2026-09-18 · Technical · relates to 0002, 0004
+
+The Store's public API isn't tied to one wire protocol. JSON is first; gRPC
+and Avro are anticipated. Each protocol is a thin adapter over the Store's
+underlying API (plain Rust calls, per 0004) — core types stay
+protocol-agnostic. `Event.data`/`metadata` are stored as opaque bytes
+(`Vec<u8>`), and each adapter en/decodes them in its own protocol's native
+encoding (JSON value, Avro bytes, protobuf bytes) rather than through one
+forced canonical format.
+
+- **Why:** it should be easy to swap the Store's protocol later or add
+  another one alongside it, without reworking the core.
+- **Cost:** no shared codec across adapters, and no stored format tag — an
+  Event read through a different protocol than it was written with can't
+  tell how to decode `data`/`metadata`. Left open; not a problem yet.
