@@ -23,6 +23,17 @@ are separate, later concerns.
      to pass them, then commit the implementation separately.
 - **One step = two small commits** (tests, then implementation), so a review
   never spans both "what's being tested" and "how it's implemented" at once.
+- **Snapshots are written, not recorded.** From step 7 on, a step's `Then` is
+  an inline `insta` snapshot. It is hand-written at (a) from what
+  SPECIFICATION.md says the state should be, and fails until the
+  implementation matches. `cargo insta review` is for deliberate updates to
+  an already-approved snapshot — never for filling in a blank left at (a).
+  Recording a snapshot from a run and eyeballing it is approval *after* the
+  fact, which would make the checkpoint meaningless.
+- **The dump is test-only.** It exists to make `Given` and `Then` readable.
+  It is not a serialization, import or export format, and nothing in it
+  commits us to one — persistence stays a later slice (see "After this
+  plan").
 - **If the design doesn't hold up while implementing a step** (a schema field
   doesn't fit, a rule is ambiguous, an error case is missing) — stop, don't
   route around it. Flag it, update SPECIFICATION.md/DECISIONS.md, and adjust
@@ -75,9 +86,9 @@ No Store yet.
 
 ### Step 4 — Append Event: ordering and StreamNotFound
 
-- **4a (tests):** `AppendEvent.01`–`.04` (events land at the end, in order,
-  with the Store incrementing each Event's `vector_clock` entry for its own
-  node), `AppendEvent.09`
+- **4a (tests) [DONE]:** `AppendEvent.01`–`.04` (events land at the end, in
+  order, with the Store incrementing each Event's `vector_clock` entry for
+  its own node), `AppendEvent.09`
   (`StreamNotFound` when the Stream was never created).
   Note: `AppendEvent.08` needs no dedicated test — it documents an
   application-level habit (don't re-create a Stream you already created)
@@ -88,74 +99,119 @@ No Store yet.
 **Commits:** "Add tests for AppendEvent: ordering and StreamNotFound" →
 "Implement AppendEvent: ordering and StreamNotFound"
 
-### Step 5 — Append Event: idempotency and validation
+### Step 5 — Read Stream
 
-- **5a (tests):** `AppendEvent.05` (retry with the same `event_id` appends
+Moved ahead of the remaining Append rules: nothing can observe a Stream's
+contents until `read_stream` exists, so both the later steps' `Then`s and the
+step 7 dump depend on it.
+
+- **5a (tests):** `ReadStream.01` (returns events in append order),
+  `ReadStream.02` (empty Stream reads as `[]`), `ReadStream.04`
+  (`StreamNotFound` for a Stream that was never created).
+  These keep direct field assertions permanently — the step 7 dump is built
+  *on* `read_stream`, so snapshotting its own tests would be circular.
+  → **checkpoint.**
+- **5b (implementation):** implement `read_stream`.
+
+### Step 6 — Inject the clock into the Store
+
+Not a `FeatureRule` — a design change that approval testing needs first. A
+dump carrying `FormattedDateTime::now()` output can never be stable, and
+today `created_at` and `timestamp` are unobservable in tests for the same
+reason. Dependency injection fixes both, rather than redacting the values
+out of the snapshots afterwards.
+
+- **6a (tests):** a Store built with a fixed clock stamps a known
+  `created_at` on a Stream it creates and a known `timestamp` on an Event it
+  appends; the stepping test clock advances a fixed interval per call, so
+  Events appended in order carry increasing timestamps.
+  → **checkpoint.**
+- **6b (implementation):** a `Clock` trait the Store holds — `SystemClock`
+  in production, a stepping clock in `tests/common`. `Store::new` grows a
+  clock argument alongside the node id.
+
+### Step 7 — Approval-testing harness: one notation for Given and Then
+
+- **7a (the notation):** settle the text format before writing any harness
+  code — a Stream header line (id, status, `created_at`) and one line per
+  Event (vector clock, type, data). Vector clocks render sorted by node id,
+  so `HashMap` iteration order can't reorder them. `event_id` stays out: it
+  is the Application's idempotency key, not Stream content, and the tests
+  that care about it (step 8) pin and assert it directly.
+  → **checkpoint.**
+- **7b (harness):** `dump(&store, "Chores")` renders that notation via
+  `read_stream`. `given("...")` parses the same notation and replays it
+  through `create_stream`/`append_event`, asserting the Store assigns the
+  vector clocks the text claims — so a `Given` block cannot quietly drift
+  from what the Store would really produce, which is the weakness
+  DECISIONS.md 0009 accepts for comment-only Givens.
+- **7c (conversion):** restate the CreateStream and AppendEvent `Then`s as
+  inline `insta` snapshots, keeping the Given/When/Then comments. The field
+  assertions those tests have today are the check on the harness: the
+  snapshots must say the same thing before the assertions come out. Adds
+  `insta` as a dev-dependency.
+
+### Step 8 — Append Event: idempotency and validation
+
+- **8a (tests):** `AppendEvent.05` (retry with the same `event_id` appends
   once), `AppendEvent.10` (`EventIdConflict` when `event_id` is reused with
   different data), `AppendEvent.11` (`InvalidEvent` when a required field is
   missing), `AppendEvent.07` (locks in that `data` is opaque — no app-level
   validation).
   → **checkpoint.**
-- **5b (implementation):** add idempotency-by-`event_id` and shape validation
+- **8b (implementation):** add idempotency-by-`event_id` and shape validation
   to `append_event`.
 
-### Step 6 — Read Stream
+### Step 9 — Close Stream
 
-- **6a (tests):** `ReadStream.01` (returns events in append order),
-  `ReadStream.02` (empty Stream reads as `[]`), `ReadStream.04`
-  (`StreamNotFound` for a Stream that was never created).
-  → **checkpoint.**
-- **6b (implementation):** implement `read_stream`.
-
-### Step 7 — Close Stream
-
-- **7a (tests):** `CloseStream.01` (closing an already-closed Stream is a
+- **9a (tests):** `CloseStream.01` (closing an already-closed Stream is a
   no-op), `CloseStream.02` (open → closed, Events unchanged), `CloseStream.03`
   (`StreamNotFound` for a Stream that was never created).
   → **checkpoint.**
-- **7b (implementation):** implement `close_stream`.
+- **9b (implementation):** implement `close_stream`.
 
-### Step 8 — Enforce StreamClosed across Append/Read/Create
+### Step 10 — Enforce StreamClosed across Append/Read/Create
 
 Now that Close Stream exists, wire up the closed-Stream rules that depend on
 it:
 
-- **8a (tests):** `AppendEvent.06` (`StreamClosed` on append to a closed
+- **10a (tests):** `AppendEvent.06` (`StreamClosed` on append to a closed
   Stream), `ReadStream.03` (reading a closed Stream still returns its Events),
   `CreateStream.03` (`StreamClosed` when Create targets an id whose Stream is
   closed — Create is not a way to reopen).
   → **checkpoint.**
-- **8b (implementation):** add the closed-Stream checks to
+- **10b (implementation):** add the closed-Stream checks to
   `append_event`/`read_stream`/`create_stream`.
 
-### Step 9 — Delete Stream
+### Step 11 — Delete Stream
 
-- **9a (tests):** `DeleteStream.01` (`StreamNotClosed` when deleting an open
+- **11a (tests):** `DeleteStream.01` (`StreamNotClosed` when deleting an open
   Stream), `DeleteStream.02` (deleting a closed Stream removes it and its
   Events), `DeleteStream.04` (idempotent — deleting an already-deleted Stream
   succeeds).
   → **checkpoint.**
-- **9b (implementation):** implement `delete_stream`.
+- **11b (implementation):** implement `delete_stream`.
 
-### Step 10 — Delete/Create interplay across Streams
+### Step 12 — Delete/Create interplay across Streams
 
-- **10a (tests):** `DeleteStream.03` (deleting one Stream leaves an unrelated
+- **12a (tests):** `DeleteStream.03` (deleting one Stream leaves an unrelated
   Stream, e.g. a summary Stream, untouched), `CreateStream.04` (recreating a
   previously-deleted id starts a fresh, empty Stream — delete doesn't retire
   the id).
   → **checkpoint.**
-- **10b (implementation):** fix up anything `9b` didn't already cover (this
-  step should mostly just confirm existing behavior — a good sign if 10b ends
+- **12b (implementation):** fix up anything `11b` didn't already cover (this
+  step should mostly just confirm existing behavior — a good sign if 12b ends
   up empty).
 
-### Step 11 — End-to-end narrative test
+### Step 13 — End-to-end narrative test
 
-- **11a (tests):** one integration test walking through the full "Annabel and
+- **13a (tests):** one integration test walking through the full "Annabel and
   the Todo Application" narrative from SPECIFICATION.md (Lists → Chores →
   ChoresHistory), written against the public Store API only, as living
-  documentation.
+  documentation. With the step 7 harness in place this reads as a dump after
+  each beat of the narrative rather than a wall of assertions.
   → **checkpoint.**
-- **11b:** this test should already pass against steps 1–10's implementation
+- **13b:** this test should already pass against steps 1–12's implementation
   — if it doesn't, that's a sign a rule was missed earlier, not a new
   feature to build.
 
@@ -166,7 +222,8 @@ it:
 Once this lands, Event and Stream management (v1, single-writer, in-memory) is
 feature-complete against SPECIFICATION.md. Next slices, not covered here:
 
-- Persistence (currently in-memory only).
+- Persistence (currently in-memory only). The step 7 dump is test-only and
+  deliberately not a candidate format for it.
 - Stream subscription (push/hooks) — builds on this.
 - Node replication, and the still-open questions in DECISIONS.md 0003/0006
   (vector clocks, concurrent writers to the same Stream at the same Node).

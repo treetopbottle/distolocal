@@ -139,7 +139,7 @@ Integration tests share setup and test data through plain helper functions in
   narrative Events fix that with no dev-dependency.
 - **Alternatives:** `rstest`, which does offer `#[fixture]` injection and
   parameterized cases. Worth revisiting once one assertion needs to run
-  across many inputs — e.g. the closed-Stream rules in Plan.md step 8.
+  across many inputs — e.g. the closed-Stream rules in Plan.md step 10.
 
 ## 0009 — Given/When/Then lives in comments, not in a test DSL
 
@@ -160,7 +160,74 @@ Given/When/Then wording as comments above plain arrange/act/assert code.
   of a comment (`World::given_stream("Chores").containing([...])`, then
   `when_appending(...)`, then `then_stream_contains([...])`). Keeping the
   outcome rather than unwrapping it is what lets a `then_*` assert on errors
-  as well as successes. It closes the drift gap above; revisit if the step 11
+  as well as successes. It closes the drift gap above; revisit if the step 13
   narrative test gets unwieldy. The `cucumber` crate (real `.feature` files)
   was rejected as too much machinery, and it would duplicate the spec text
   unless SPECIFICATION.md became the source of those files.
+- **Partly addressed by 0011:** the `given()` parser closes this drift gap on
+  the `Given` side. The `When` and `Then` comments stay unenforced.
+
+## 0010 — Approval testing for Stream contents
+
+Accepted · 2026-09-19 · Technical · relates to 0009, 0011, 0012
+
+From Plan.md step 7 on, a test's `Then` is an inline `insta` snapshot of the
+Stream's rendered state rather than a list of field assertions.
+
+- **Why:** one snapshot covers ordering, vector clocks and payloads at once,
+  and reads close to SPECIFICATION.md's own `[TodoCreated#1, TodoCreated#2]`
+  notation. Field assertions fragment that into individually-passing checks
+  while the state as a whole goes unreviewed.
+- **Cost:** a snapshot is easy to update without reading it. Countered by
+  Plan.md's working agreement: snapshots are hand-written at the (a) tests
+  step from what the spec says the state should be, and `cargo insta review`
+  is only for deliberate updates to an already-approved snapshot — never for
+  filling in a blank. Recording and eyeballing would be approval after the
+  fact, hollowing out the checkpoint.
+- **Exception:** `read_stream`'s own tests keep direct field assertions, since
+  the dump is built on `read_stream` and snapshotting them would be circular.
+- **Alternatives:** `expect-test` (inline only, `UPDATE_EXPECT=1`) — `insta`
+  picked for its `.snap` files, redactions and review workflow, should those
+  be wanted later. Keeping field assertions throughout — rejected as
+  unreadable by the step 13 narrative test.
+
+## 0011 — One test-only notation for both Given and Then
+
+Accepted · 2026-09-19 · Technical · relates to 0008, 0009, 0010
+
+Tests render and construct Stream state through a single text notation:
+`dump(&store, stream_id)` renders it, and `given(text)` parses the same
+notation and replays it through the public `create_stream`/`append_event`
+API.
+
+- **Why:** the reader compares the before and after state in one shape
+  instead of translating between setup calls and expected output. Replaying
+  through the public API also means `given()` can assert the Store really
+  assigns the vector clocks the text claims, so a `Given` cannot describe a
+  state the Store would never produce.
+- **Cost:** the notation is a second description of the Event schema, to be
+  kept in step with the real one.
+- **Scope:** test-only. It is not a serialization, import or export format,
+  and it does not preempt the persistence slice — building the real export
+  format now would let test ergonomics shape a production format ahead of
+  that decision. Revisit only as a deliberate choice to dogfood a real
+  format.
+
+## 0012 — The Store takes its clock as a dependency
+
+Accepted · 2026-09-19 · Technical · relates to 0010
+
+The Store holds a `Clock` — `SystemClock` in production, a stepping clock in
+tests — instead of calling `OffsetDateTime::now_utc()` directly.
+
+- **Why:** `timestamp` and `created_at` are Store-assigned (SPECIFICATION.md
+  Event schema), so they belong in the dump, but a snapshot of wall-clock
+  output can never be stable. Injection makes them deterministic and, for the
+  first time, assertable at all.
+- **Cost:** a production design change made for test reasons, and `Store::new`
+  grows an argument. Accepted because an injectable clock is independently
+  reasonable for a Node that will later have to reason about time, and the
+  alternative hides a field the Store is responsible for.
+- **Alternatives:** `insta` redactions or filters to blank the timestamps, or
+  leaving them out of the notation entirely. Both keep the Store's own
+  clock behavior untested.
