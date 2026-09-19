@@ -38,7 +38,7 @@ pub struct Event {
 // and `timestamp` the Store assigns at append time. See SPECIFICATION.md's
 // Event schema.
 #[derive(Debug)]
-pub struct NewEvent {
+pub struct PendingEvent {
     pub event_id: String,
     pub event_type: String,
     pub data: Vec<u8>,
@@ -100,7 +100,7 @@ impl Store {
 
     /// AppendEvent.01–.04/.09 — append an Event to the end of an existing
     /// Stream, stamping it with this Node's next count for that Stream.
-    pub fn append_event(&mut self, stream_id: &str, event: NewEvent) -> Result<Event, Error> {
+    pub fn append_event(&mut self, stream_id: &str, event: PendingEvent) -> Result<Event, Error> {
         let Store { node_id, streams } = self;
         let (_, events) = streams
             .get_mut(stream_id)

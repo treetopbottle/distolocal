@@ -2,7 +2,7 @@
 // separately, so helpers a given test file doesn't use would warn.
 #![allow(dead_code)]
 
-use distolocal::{Event, NewEvent, Store};
+use distolocal::{Event, PendingEvent, Store};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -24,7 +24,7 @@ pub fn store_with(stream_ids: &[&str]) -> Store {
 }
 
 /// Append as an arrange step, where the call itself isn't what's under test.
-pub fn append(store: &mut Store, stream_id: &str, event: NewEvent) -> Event {
+pub fn append(store: &mut Store, stream_id: &str, event: PendingEvent) -> Event {
     store
         .append_event(stream_id, event)
         .expect("appending to an open Stream should succeed")
@@ -39,28 +39,28 @@ pub fn clock(count: u64) -> HashMap<String, u64> {
 // The Events from SPECIFICATION.md's "Annabel and the Todo Application"
 // narrative, taking the arguments the narrative names. The Application
 // generates an `event_id` per Event (SPECIFICATION.md Event schema), so these
-// do too — no test needs to see it until Plan.md step 5 pins one to test
+// do too — no test needs to see it until Plan.md step 8 pins one to test
 // idempotency.
 
-pub fn todo_list_created(name: &str) -> NewEvent {
-    new_event("TodoListCreated", &format!(r#"{{"name":"{name}"}}"#))
+pub fn todo_list_created(name: &str) -> PendingEvent {
+    pending_event("TodoListCreated", &format!(r#"{{"name":"{name}"}}"#))
 }
 
-pub fn todo_created(todo_id: u64, title: &str) -> NewEvent {
-    new_event(
+pub fn todo_created(todo_id: u64, title: &str) -> PendingEvent {
+    pending_event(
         "TodoCreated",
         &format!(r#"{{"todo_id":{todo_id},"title":"{title}"}}"#),
     )
 }
 
-pub fn todo_finished(todo_id: u64) -> NewEvent {
-    new_event("TodoFinished", &format!(r#"{{"todo_id":{todo_id}}}"#))
+pub fn todo_finished(todo_id: u64) -> PendingEvent {
+    pending_event("TodoFinished", &format!(r#"{{"todo_id":{todo_id}}}"#))
 }
 
-fn new_event(event_type: &str, data: &str) -> NewEvent {
+fn pending_event(event_type: &str, data: &str) -> PendingEvent {
     static NEXT_EVENT_ID: AtomicU64 = AtomicU64::new(1);
 
-    NewEvent {
+    PendingEvent {
         event_id: format!("event-{}", NEXT_EVENT_ID.fetch_add(1, Ordering::Relaxed)),
         event_type: event_type.to_string(),
         data: data.as_bytes().to_vec(),
