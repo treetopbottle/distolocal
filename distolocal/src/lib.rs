@@ -17,7 +17,7 @@ impl FormattedDateTime {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Event {
     pub event_id: String,
     pub stream_id: String,
@@ -30,6 +30,17 @@ pub struct Event {
     // Opaque to the Store — stored and returned as-is, in whichever
     // encoding the calling protocol used to produce them. See
     // DECISIONS.md 0007.
+    pub data: Vec<u8>,
+    pub metadata: Vec<u8>,
+}
+
+// An Event as the Application supplies it: everything but the `vector_clock`
+// and `timestamp` the Store assigns at append time. See SPECIFICATION.md's
+// Event schema.
+#[derive(Debug)]
+pub struct NewEvent {
+    pub event_id: String,
+    pub event_type: String,
     pub data: Vec<u8>,
     pub metadata: Vec<u8>,
 }
@@ -57,12 +68,14 @@ pub enum Error {
 }
 
 pub struct Store {
+    node_id: String,
     streams: HashMap<String, (Stream, Vec<Event>)>,
 }
 
 impl Store {
-    pub fn new() -> Self {
+    pub fn new(node_id: &str) -> Self {
         Store {
+            node_id: node_id.to_string(),
             streams: HashMap::new(),
         }
     }
@@ -83,5 +96,34 @@ impl Store {
         self.streams
             .insert(stream_id.to_string(), (stream.clone(), Vec::new()));
         Ok(stream)
+    }
+
+    /// AppendEvent.01–.04/.09 — append an Event to the end of an existing
+    /// Stream, stamping it with this Node's next count for that Stream.
+    pub fn append_event(&mut self, stream_id: &str, event: NewEvent) -> Result<Event, Error> {
+        let Store { node_id, streams } = self;
+        let (_, events) = streams
+            .get_mut(stream_id)
+            .ok_or_else(|| Error::StreamNotFound {
+                stream_id: stream_id.to_string(),
+            })?;
+
+        let mut vector_clock = events
+            .last()
+            .map(|last| last.vector_clock.clone())
+            .unwrap_or_default();
+        *vector_clock.entry(node_id.clone()).or_insert(0) += 1;
+
+        let appended = Event {
+            event_id: event.event_id,
+            stream_id: stream_id.to_string(),
+            vector_clock,
+            event_type: event.event_type,
+            timestamp: FormattedDateTime::now(),
+            data: event.data,
+            metadata: event.metadata,
+        };
+        events.push(appended.clone());
+        Ok(appended)
     }
 }

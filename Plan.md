@@ -84,7 +84,7 @@ No Store yet.
   → **checkpoint.**
 - **3b (implementation):** introduce `Store`, implement `create_stream`.
 
-### Step 4 — Append Event: ordering and StreamNotFound
+### Step 4 — Append Event: ordering and StreamNotFound [DONE]
 
 - **4a (tests) [DONE]:** `AppendEvent.01`–`.04` (events land at the end, in
   order, with the Store incrementing each Event's `vector_clock` entry for
