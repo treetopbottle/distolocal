@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
+use time::format_description::well_known::Rfc3339;
 
 // An RFC 3339 formatted timestamp. Wraps the formatted string rather than
 // `String` so a `timestamp`/`created_at` field can't hold arbitrary text.
