@@ -126,3 +126,41 @@ forced canonical format.
 - **Cost:** no shared codec across adapters, and no stored format tag — an
   Event read through a different protocol than it was written with can't
   tell how to decode `data`/`metadata`. Left open; not a problem yet.
+
+## 0008 — Test data lives in plain helpers, not a fixture crate
+
+Accepted · 2026-09-19 · Technical · relates to 0004
+
+Integration tests share setup and test data through plain helper functions in
+`distolocal/tests/common/mod.rs` — no fixture framework.
+
+- **Why:** Rust has no built-in fixtures, and the pain is the shape of the
+  test data, not setup/teardown. Named constructors for the SPECIFICATION.md
+  narrative Events fix that with no dev-dependency.
+- **Alternatives:** `rstest`, which does offer `#[fixture]` injection and
+  parameterized cases. Worth revisiting once one assertion needs to run
+  across many inputs — e.g. the closed-Stream rules in Plan.md step 8.
+
+## 0009 — Given/When/Then lives in comments, not in a test DSL
+
+Accepted · 2026-09-19 · Technical · relates to 0008
+
+Each test carries its `FeatureRule.NN` id and SPECIFICATION.md's own
+Given/When/Then wording as comments above plain arrange/act/assert code.
+
+- **Why:** the comments keep each test anchored to the spec text it covers —
+  the part most likely to drift — while the code stays ordinary Rust that
+  needs no framework to read or debug.
+- **Cost:** nothing ties a comment to the code beneath it. A `Given` that
+  says `[TodoCreated#1]` above a helper call using `todo_id=2` still compiles
+  and passes.
+- **Alternatives:** a `World` DSL — a test-only struct holding the Store, the
+  Stream under test and the outcome of the last call, exposing
+  `given_*`/`when_*`/`then_*` methods so each phase is a method call instead
+  of a comment (`World::given_stream("Chores").containing([...])`, then
+  `when_appending(...)`, then `then_stream_contains([...])`). Keeping the
+  outcome rather than unwrapping it is what lets a `then_*` assert on errors
+  as well as successes. It closes the drift gap above; revisit if the step 11
+  narrative test gets unwieldy. The `cucumber` crate (real `.feature` files)
+  was rejected as too much machinery, and it would duplicate the spec text
+  unless SPECIFICATION.md became the source of those files.
