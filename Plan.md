@@ -63,7 +63,7 @@ already verifies for free. Skipped the tests split for this step:
 
 No Store yet.
 
-### Step 3 — Create Stream: new and idempotent-open
+### Step 3 — Create Stream: new and idempotent-open [DONE]
 
 - **3a (tests):** `CreateStream.01` (create a Stream that doesn't exist),
   `CreateStream.02` (create an already-open Stream again → returns it
