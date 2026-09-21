@@ -114,7 +114,7 @@ step 7 dump depend on it.
 - **5b (implementation):** implement `read_stream`, returning a borrowed
   `&[Event]` rather than owned copies (DECISIONS.md 0013).
 
-### Step 6 — Inject the clock into the Store
+### Step 6 — Inject the clock into the Store [DONE]
 
 Not a `FeatureRule` — a design change that approval testing needs first. A
 dump carrying `FormattedDateTime::now()` output can never be stable, and
@@ -129,9 +129,10 @@ out of the snapshots afterwards.
   their start (and the stepping one its interval) as parameters, with the
   shared constants as defaults.
   → **checkpoint.**
-- **6b (implementation):** a `Clock` trait the Store holds — `SystemClock`
-  in production, a stepping clock in `tests/common`. `Store::new` grows a
-  clock argument alongside the node id.
+- **6b (implementation) [DONE]:** a `Clock` trait the Store holds —
+  `SystemClock` in production, a stepping clock in `tests/common`.
+  `Store::new` grows a clock argument alongside the node id, boxed rather
+  than a `Store<C: Clock>` type parameter.
 
 ### Step 7 — Approval-testing harness: one notation for Given and Then
 

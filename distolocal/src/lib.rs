@@ -1,19 +1,44 @@
 use std::collections::HashMap;
+use std::fmt;
 use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
 
+// The source of the times the Store assigns — `created_at` on a Stream,
+// `timestamp` on an Event. A dependency rather than a direct call to
+// `OffsetDateTime::now_utc()` so tests can hand the Store a clock that reads
+// a known instant; see DECISIONS.md 0012.
+pub trait Clock {
+    fn now(&self) -> OffsetDateTime;
+}
+
+/// The clock a Node runs on in production: the machine's wall clock, in UTC.
+pub struct SystemClock;
+
+impl Clock for SystemClock {
+    fn now(&self) -> OffsetDateTime {
+        OffsetDateTime::now_utc()
+    }
+}
+
 // An RFC 3339 formatted timestamp. Wraps the formatted string rather than
-// `String` so a `timestamp`/`created_at` field can't hold arbitrary text.
+// `String` so a `timestamp`/`created_at` field can't hold arbitrary text —
+// the only way to build one is from an `OffsetDateTime`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FormattedDateTime(String);
 
-impl FormattedDateTime {
-    pub fn now() -> Self {
+impl From<OffsetDateTime> for FormattedDateTime {
+    fn from(moment: OffsetDateTime) -> Self {
         FormattedDateTime(
-            OffsetDateTime::now_utc()
+            moment
                 .format(&Rfc3339)
-                .expect("formatting the current time as RFC 3339 should never fail"),
+                .expect("formatting a time as RFC 3339 should never fail"),
         )
+    }
+}
+
+impl fmt::Display for FormattedDateTime {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
     }
 }
 
@@ -69,13 +94,18 @@ pub enum Error {
 
 pub struct Store {
     node_id: String,
+    // Boxed rather than a `Store<C: Clock>` type parameter: which clock a
+    // Store runs on is of no interest to its callers, and a parameter would
+    // spread through every signature that names a Store.
+    clock: Box<dyn Clock>,
     streams: HashMap<String, (Stream, Vec<Event>)>,
 }
 
 impl Store {
-    pub fn new(node_id: &str) -> Self {
+    pub fn new(node_id: &str, clock: impl Clock + 'static) -> Self {
         Store {
             node_id: node_id.to_string(),
+            clock: Box::new(clock),
             streams: HashMap::new(),
         }
     }
@@ -91,7 +121,7 @@ impl Store {
         let stream = Stream {
             stream_id: stream_id.to_string(),
             status: StreamStatus::Open,
-            created_at: FormattedDateTime::now(),
+            created_at: self.clock.now().into(),
         };
         self.streams
             .insert(stream_id.to_string(), (stream.clone(), Vec::new()));
@@ -118,7 +148,11 @@ impl Store {
     /// AppendEvent.01–.04/.09 — append an Event to the end of an existing
     /// Stream, stamping it with this Node's next count for that Stream.
     pub fn append_event(&mut self, stream_id: &str, event: PendingEvent) -> Result<Event, Error> {
-        let Store { node_id, streams } = self;
+        let Store {
+            node_id,
+            clock,
+            streams,
+        } = self;
         let (_, events) = streams
             .get_mut(stream_id)
             .ok_or_else(|| Error::StreamNotFound {
@@ -136,7 +170,7 @@ impl Store {
             stream_id: stream_id.to_string(),
             vector_clock,
             event_type: event.event_type,
-            timestamp: FormattedDateTime::now(),
+            timestamp: clock.now().into(),
             data: event.data,
             metadata: event.metadata,
         };
