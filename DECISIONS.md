@@ -272,3 +272,27 @@ this thing, read from its own clock.
   name — rejected because the convention buys nothing once a second time
   exists, and the ambiguity lands exactly where replication is hardest.
 
+## 0015 — A `Given`'s times drive the Store's clock
+
+Accepted · 2026-09-21 · Technical · relates to 0011, 0012
+
+`given(text)` builds the Store with a clock that reads out the times the text
+names, in order, and then carries on stepping from the last one. The vector
+clocks the text claims are still asserted against what the Store computes.
+
+- **Why:** a Node has one clock, shared by every Stream on it (see 0012), so
+  an Event's `created_at` depends on every earlier reading in the test, not
+  just on its own Stream. Asserting the times would tie each `Given` block to
+  whatever preceded it, and a block copied out of a dump would only work in
+  the position it came from. Time is an input to the Store; the vector clock
+  is derived from it — `given()` supplies the input and checks the
+  derivation, which is what 0011 is really after.
+- **Cost:** the times in a `Given` are checked against nothing, so a block
+  can claim an implausible one — an Event before the Stream that holds it. A
+  `Then` still renders what the Store really produced.
+- **Alternatives:** times optional in a `Given`, asserted when present —
+  rejected for the copied-block problem above. A clock per Stream, so each
+  one counts from its own creation — rejected: a Node has one clock, and
+  pretending otherwise would hide in the test harness exactly what
+  replication has to reason about.
+
