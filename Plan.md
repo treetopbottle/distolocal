@@ -105,7 +105,7 @@ Moved ahead of the remaining Append rules: nothing can observe a Stream's
 contents until `read_stream` exists, so both the later steps' `Then`s and the
 step 7 dump depend on it.
 
-- **5a (tests):** `ReadStream.01` (returns events in append order),
+- **5a (tests) [DONE]:** `ReadStream.01` (returns events in append order),
   `ReadStream.02` (empty Stream reads as `[]`), `ReadStream.04`
   (`StreamNotFound` for a Stream that was never created).
   These keep direct field assertions permanently — the step 7 dump is built
