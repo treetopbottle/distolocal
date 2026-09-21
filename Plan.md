@@ -99,7 +99,7 @@ No Store yet.
 **Commits:** "Add tests for AppendEvent: ordering and StreamNotFound" →
 "Implement AppendEvent: ordering and StreamNotFound"
 
-### Step 5 — Read Stream
+### Step 5 — Read Stream [DONE]
 
 Moved ahead of the remaining Append rules: nothing can observe a Stream's
 contents until `read_stream` exists, so both the later steps' `Then`s and the

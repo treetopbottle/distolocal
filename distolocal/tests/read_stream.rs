@@ -33,7 +33,7 @@ fn read_stream_with_events() {
 #[test]
 fn read_stream_that_is_empty() {
     // Given the Stream "Groceries" exists and contains: []
-    let mut store = store_with(&["Groceries"]);
+    let store = store_with(&["Groceries"]);
 
     // When the Todo app reads all Events in "Groceries"
     let events = store

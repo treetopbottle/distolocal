@@ -98,6 +98,23 @@ impl Store {
         Ok(stream)
     }
 
+    /// ReadStream.01/.02/.04 — all the Events in a Stream, in append order;
+    /// an empty Stream reads as `[]`, but a Stream that was never created is
+    /// a `StreamNotFound` error.
+    ///
+    /// The Events stay owned by the Store (DECISIONS.md 0013) — a caller that
+    /// needs its own copy calls `.to_vec()`.
+    pub fn read_stream(&self, stream_id: &str) -> Result<&[Event], Error> {
+        let (_, events) = self
+            .streams
+            .get(stream_id)
+            .ok_or_else(|| Error::StreamNotFound {
+                stream_id: stream_id.to_string(),
+            })?;
+
+        Ok(events)
+    }
+
     /// AppendEvent.01–.04/.09 — append an Event to the end of an existing
     /// Stream, stamping it with this Node's next count for that Stream.
     pub fn append_event(&mut self, stream_id: &str, event: PendingEvent) -> Result<Event, Error> {
