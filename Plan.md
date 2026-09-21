@@ -122,10 +122,12 @@ today `created_at` and `timestamp` are unobservable in tests for the same
 reason. Dependency injection fixes both, rather than redacting the values
 out of the snapshots afterwards.
 
-- **6a (tests):** a Store built with a fixed clock stamps a known
-  `created_at` on a Stream it creates and a known `timestamp` on an Event it
+- **6a (tests) [DONE]:** a Store built with a fixed clock gives a known
+  `created_at` to a Stream it creates and a known `timestamp` to an Event it
   appends; the stepping test clock advances a fixed interval per call, so
-  Events appended in order carry increasing timestamps.
+  Events appended in order carry increasing timestamps. Both clocks take
+  their start (and the stepping one its interval) as parameters, with the
+  shared constants as defaults.
   → **checkpoint.**
 - **6b (implementation):** a `Clock` trait the Store holds — `SystemClock`
   in production, a stepping clock in `tests/common`. `Store::new` grows a

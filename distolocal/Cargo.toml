@@ -5,3 +5,7 @@ edition = "2024"
 
 [dependencies]
 time = { version = "0.3", features = ["formatting"] }
+
+[dev-dependencies]
+# `datetime!`, for the fixed instants the test clocks read.
+time = { version = "0.3", features = ["macros"] }
