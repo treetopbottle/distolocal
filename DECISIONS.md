@@ -231,3 +231,22 @@ tests — instead of calling `OffsetDateTime::now_utc()` directly.
 - **Alternatives:** `insta` redactions or filters to blank the timestamps, or
   leaving them out of the notation entirely. Both keep the Store's own
   clock behavior untested.
+
+## 0013 — `read_stream` returns borrowed Events, not owned copies
+
+Accepted · 2026-09-21 · Technical · relates to 0007
+
+`Store::read_stream(&self, stream_id) -> Result<&[Event], Error>` hands out a
+slice into the Store's own storage. A caller that needs its own copy — to
+keep it across an append, send it to another thread, or outlive the Store —
+writes `.to_vec()`.
+
+- **Why:** the Events are in the Store; the common read folds them into
+  Application state and drops them immediately, so an owned `Vec` would clone
+  every `data`/`metadata` buffer for nothing. The caller decides whether a
+  copy is worth it, as `HashMap::get` and friends do. The borrow also stops a
+  read from being held across an append, which the borrow checker is right to
+  reject.
+- **Cost:** a read can't be held across a mutation without `.to_vec()`.
+- **Alternatives:** returning `Vec<Event>` — rejected as an allocation on
+  every read to pre-pay for a design decision persistence will make anyway.

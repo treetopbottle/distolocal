@@ -111,7 +111,8 @@ step 7 dump depend on it.
   These keep direct field assertions permanently — the step 7 dump is built
   *on* `read_stream`, so snapshotting its own tests would be circular.
   → **checkpoint.**
-- **5b (implementation):** implement `read_stream`.
+- **5b (implementation):** implement `read_stream`, returning a borrowed
+  `&[Event]` rather than owned copies (DECISIONS.md 0013).
 
 ### Step 6 — Inject the clock into the Store
 
