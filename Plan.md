@@ -140,20 +140,23 @@ values out of the snapshots afterwards.
 ### Step 7 — Approval-testing harness: one notation for Given and Then
 
 - **7a (the notation) [DONE]:** a Stream header line — quoted id, status,
-  `created_at` — then one line per Event (type, vector clock, `created_at`)
+  `created_at` — then one line per Event (`created_at`, vector clock, type)
   indented under it, with the payloads indented further again:
 
   ```
   "chores-3f2a1c" open 2026-01-01T00:00:02Z
-    TodoCreated {node-a:1} 2026-01-01T00:00:03Z
+    2026-01-01T00:00:03Z {node-a:1} TodoCreated
       data {"todo_id":1,"title":"Take out the trash"}
-    TodoFinished {node-a:2} 2026-01-01T00:00:04Z
+    2026-01-01T00:00:04Z {node-a:2} TodoFinished
       data {"todo_id":1}
       metadata {"schema_version":"1.7.2"}
   ```
 
-  Stream ids are quoted because the Application chooses them and nothing
-  stops one holding a space; Event types are identifiers, so they stay bare.
+  The time leads each Event line because it is always the same width, so the
+  vector clocks line up in a column under each other and a variable-width
+  Event type can't push them out of alignment. Stream ids are quoted because
+  the Application chooses them and nothing stops one holding a space; Event
+  types are identifiers, so they stay bare.
   Vector clocks render as the map they are, sorted by node id so `HashMap`
   iteration order can't reorder them — today one entry, per DECISIONS.md
   0005. `data` always renders (an Event without it is `InvalidEvent`);
@@ -166,13 +169,28 @@ values out of the snapshots afterwards.
   times drive the Store's clock rather than being asserted against it — see
   DECISIONS.md 0015.
   → **checkpoint.**
-- **7b (harness):** `dump(&store, "Chores")` renders that notation via
-  `read_stream`. `given("...")` parses the same notation and replays it
-  through `create_stream`/`append_event`, asserting the Store assigns the
-  vector clocks the text claims — so a `Given` block cannot quietly drift
-  from what the Store would really produce, which is the weakness
-  DECISIONS.md 0009 accepts for comment-only Givens.
-- **7c (conversion):** restate the CreateStream and AppendEvent `Then`s as
+- **7b (Get Stream):** the header line needs a Stream's `status` and
+  `created_at`, and no Store API hands them over — `read_stream` returns only
+  Events, and `create_stream` is a write that will error on a closed Stream
+  from step 10 on, which is exactly the case the header exists to show. So
+  the missing feature comes first, on its own tests → checkpoint →
+  implementation pair: `GetStream.01` (an open Stream's record),
+  `GetStream.03` (`StreamNotFound` for a Stream that was never created).
+  `GetStream.02` (a closed Stream's record) waits for step 9, the first step
+  that can close one. It goes into SPECIFICATION.md as its own feature rather
+  than as a test affordance: an Application that can close a Stream should be
+  able to ask whether one is open instead of discovering it by failing an
+  append. Kept inside step 7 rather than inserted as a step of its own, which
+  would renumber every later step out from under the references in
+  DECISIONS.md 0010, 0011 and 0015.
+  → **checkpoint.**
+- **7c (harness):** `dump(&store, "Chores")` renders that notation via
+  `get_stream`/`read_stream`. `given("...")` parses the same notation and
+  replays it through `create_stream`/`append_event`, asserting the Store
+  assigns the vector clocks the text claims — so a `Given` block cannot
+  quietly drift from what the Store would really produce, which is the
+  weakness DECISIONS.md 0009 accepts for comment-only Givens.
+- **7d (conversion):** restate the CreateStream and AppendEvent `Then`s as
   inline `insta` snapshots, keeping the Given/When/Then comments. The field
   assertions those tests have today are the check on the harness: the
   snapshots must say the same thing before the assertions come out. Adds

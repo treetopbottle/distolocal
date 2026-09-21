@@ -40,7 +40,7 @@ Errors returned by the Store's Event and Stream management features.
 
 | Error | Raised when |
 |---|---|
-| `StreamNotFound` | Append, Read, or Close is called on a Stream that was never created |
+| `StreamNotFound` | Append, Read, Get, or Close is called on a Stream that was never created |
 | `StreamClosed` | Append is called on a Stream that is closed, or Create is called on an id that belongs to a closed Stream |
 | `StreamNotClosed` | Delete is called on a Stream that is still open |
 | `EventIdConflict` | Append is called with an `event_id` already used in that Stream, but with different data (see AppendEvent.10) |
@@ -63,7 +63,7 @@ Annabel adds "Take out the trash" to her chores list [Append Event]. Annabel add
 
 Annabel marks "Take out the trash" as done [Append Event].
 
-A while later, Annabel reopens the Todo app. It reads the full Stream to reconstruct her chores list, showing one open and one finished chore [Read Stream].
+A while later, Annabel reopens the Todo app. It checks that the "Chores" list is still open [Get Stream], then reads the full Stream to reconstruct it, showing one open and one finished chore [Read Stream].
 
 Annabel is marks the whole "Chores" list as finished. The app computes a summary of how many chores were completed and appends it to a "ChoresHistory" Stream [Append Event], then closes the "Chores" Stream [Close Stream].
 
@@ -72,6 +72,7 @@ After a week, the Todo app cleans up the finished "Chores" list, deleting the St
 [Create Stream]: #feature-create-stream
 [Append Event]: #feature-append-event
 [Read Stream]: #feature-read-stream
+[Get Stream]: #feature-get-stream
 [Close Stream]: #feature-close-stream
 [Delete Stream]: #feature-delete-stream
 
@@ -240,6 +241,35 @@ Then it receives [TodoCreated#1, TodoCreated#2, TodoFinished#1]
 Given no Stream named "Groceries" exists
 When the Todo app reads all Events in "Groceries"
 Then the read fails with a StreamNotFound error
+```
+
+#### Feature: Get Stream
+
+Returns the Stream's own record — its id, status and `created_at` — without its Events. Reading the Events is [Read Stream]; this is how an Application asks whether a Stream is still open before acting on it, rather than discovering it by failing an append.
+
+**Rule: returns the Stream record whatever its status**
+
+**`GetStream.01`** Getting an open Stream
+```
+Given the Stream "Chores" is open and contains: [TodoCreated#1, TodoCreated#2]
+When the Todo app gets the Stream "Chores"
+Then it receives the record for "Chores", with status open
+```
+
+**`GetStream.02`** Getting a closed Stream
+```
+Given the Stream "Chores" is closed
+When the Todo app gets the Stream "Chores"
+Then it receives the record for "Chores", with status closed
+```
+
+**Rule: rejected with a `StreamNotFound` error if the Stream was never created, or was deleted**
+
+**`GetStream.03`** Getting a Stream that doesn't exist
+```
+Given no Stream named "Groceries" exists
+When the Todo app gets the Stream "Groceries"
+Then the get fails with a StreamNotFound error
 ```
 
 #### Feature: Close Stream
