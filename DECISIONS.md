@@ -250,3 +250,25 @@ writes `.to_vec()`.
 - **Cost:** a read can't be held across a mutation without `.to_vec()`.
 - **Alternatives:** returning `Vec<Event>` — rejected as an allocation on
   every read to pre-pay for a design decision persistence will make anyway.
+
+## 0014 — An Event's Store-assigned time is `created_at`, not `timestamp`
+
+Accepted · 2026-09-21 · Technical · relates to 0003, 0012
+
+The Event schema's `timestamp` is renamed `created_at`, matching the field a
+Stream already has. Both mean the same thing: the moment the Store recorded
+this thing, read from its own clock.
+
+- **Why:** `timestamp` says a time is present, not which time it is. Once
+  Events replicate, an Event has two times worth keeping — when the origin
+  Node created it, and when this Node received it — and `created_at` /
+  `received_at` name them, where `timestamp` would have to be redefined.
+  `created_at` also pairs with `vector_clock` as "when and where this Event
+  was created", which is how this specification already describes the two.
+- **Cost:** a schema rename, cheap now (no wire protocol, two call sites) and
+  expensive later. Test names grow a `stream_`/`event_` prefix to say which
+  `created_at` they mean.
+- **Alternatives:** keeping `timestamp` as the conventional event-store field
+  name — rejected because the convention buys nothing once a second time
+  exists, and the ambiguity lands exactly where replication is hardest.
+

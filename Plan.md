@@ -64,7 +64,9 @@ already verifies for free. Skipped the tests split for this step:
 
 - `Event`: `event_id`, `stream_id`, `vector_clock: HashMap<node_id, u64>`
   (adopted directly per DECISIONS.md 0003, in place of a `sequence_number`
-  field), `event_type`, `timestamp`, and opaque `data`/`metadata: Vec<u8>`
+  field), `event_type`, `created_at` (named `timestamp` here originally;
+  renamed at step 6 per DECISIONS.md 0014), and opaque
+  `data`/`metadata: Vec<u8>`
   (per DECISIONS.md 0007 — raw bytes, not the `serde_json::Value` originally
   proposed here).
 - `Stream`: `stream_id`, `status` (`Open`/`Closed`), `created_at`.
@@ -118,21 +120,22 @@ step 7 dump depend on it.
 
 Not a `FeatureRule` — a design change that approval testing needs first. A
 dump carrying `FormattedDateTime::now()` output can never be stable, and
-today `created_at` and `timestamp` are unobservable in tests for the same
-reason. Dependency injection fixes both, rather than redacting the values
-out of the snapshots afterwards.
+today a Stream's and an Event's `created_at` are unobservable in tests for
+the same reason. Dependency injection fixes both, rather than redacting the
+values out of the snapshots afterwards.
 
 - **6a (tests) [DONE]:** a Store built with a fixed clock gives a known
-  `created_at` to a Stream it creates and a known `timestamp` to an Event it
-  appends; the stepping test clock advances a fixed interval per call, so
-  Events appended in order carry increasing timestamps. Both clocks take
-  their start (and the stepping one its interval) as parameters, with the
-  shared constants as defaults.
+  `created_at` to a Stream it creates and to an Event it appends; the
+  stepping test clock advances a fixed interval per call, so Events appended
+  in order carry increasing `created_at`s. Both clocks take their start (and
+  the stepping one its interval) as parameters, with the shared constants as
+  defaults.
   → **checkpoint.**
 - **6b (implementation) [DONE]:** a `Clock` trait the Store holds —
   `SystemClock` in production, a stepping clock in `tests/common`.
   `Store::new` grows a clock argument alongside the node id, boxed rather
-  than a `Store<C: Clock>` type parameter.
+  than a `Store<C: Clock>` type parameter. Renaming the Event's `timestamp`
+  to `created_at` came out of this step — see DECISIONS.md 0014.
 
 ### Step 7 — Approval-testing harness: one notation for Given and Then
 

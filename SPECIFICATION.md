@@ -14,13 +14,13 @@ _Possible inspiration: CloudEvents._
   "stream_id": "string", // the target Stream's name, e.g. "Chores"; this is the Stream's sole identifier, chosen by the Application when it creates the Stream — there is no separate generated Stream ID
   "vector_clock": { "node-a": 3 }, // assigned by the Store when the Event is appended: one counter per Node that has appended to this Stream, keyed by node id — a Node absent from the map has an implicit count of 0 (see DECISIONS.md 0003). Under the current single-writer-per-Stream assumption (see DECISIONS.md 0005) this map holds exactly one entry, the appending Node's own counter, and behaves like a plain position counter; it starts detecting concurrency once multiple Nodes can append to the same Stream
   "type": "string", // e.g., "TodoFinished"
-  "timestamp": "ISO8601", // assigned by the Store at append time, using its own clock — not supplied by the Application
+  "created_at": "ISO8601", // assigned by the Store at append time, using its own clock — not supplied by the Application; named to match the Stream's `created_at`, and to leave room for a `received_at` once Events replicate between Nodes (see DECISIONS.md 0014)
   "data": { "todo_id": 1, "status": "completed" },
   "metadata": { "schema_version": "1.7.2" }
 }
 ```
 
-`event_id` and `stream_id` are assigned by the Application, not the Store — the Store never generates identifiers on the caller's behalf, it only validates and stores what it's given. `vector_clock` and `timestamp` are the exceptions: both are assigned/updated by the Store itself at append time, since they record when and where the Event landed in the Stream, not something the Application decides.
+`event_id` and `stream_id` are assigned by the Application, not the Store — the Store never generates identifiers on the caller's behalf, it only validates and stores what it's given. `vector_clock` and `created_at` are the exceptions: both are assigned/updated by the Store itself at append time, since they record when and where the Event landed in the Stream, not something the Application decides.
 
 ### Stream
 

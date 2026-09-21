@@ -3,8 +3,8 @@ use std::fmt;
 use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
 
-// The source of the times the Store assigns — `created_at` on a Stream,
-// `timestamp` on an Event. A dependency rather than a direct call to
+// The source of the times the Store assigns — `created_at`, on both a
+// Stream and an Event. A dependency rather than a direct call to
 // `OffsetDateTime::now_utc()` so tests can hand the Store a clock that reads
 // a known instant; see DECISIONS.md 0012.
 pub trait Clock {
@@ -20,9 +20,9 @@ impl Clock for SystemClock {
     }
 }
 
-// An RFC 3339 formatted timestamp. Wraps the formatted string rather than
-// `String` so a `timestamp`/`created_at` field can't hold arbitrary text —
-// the only way to build one is from an `OffsetDateTime`.
+// An RFC 3339 formatted time. Wraps the formatted string rather than
+// `String` so a `created_at` field can't hold arbitrary text — the only way
+// to build one is from an `OffsetDateTime`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FormattedDateTime(String);
 
@@ -51,7 +51,10 @@ pub struct Event {
     // 0. See DECISIONS.md 0003.
     pub vector_clock: HashMap<String, u64>,
     pub event_type: String,
-    pub timestamp: FormattedDateTime,
+    // When the Store appended this Event, read from its own clock. Named for
+    // the Stream field it mirrors, and to leave room for a `received_at`
+    // once Events replicate between Nodes. See DECISIONS.md 0014.
+    pub created_at: FormattedDateTime,
     // Opaque to the Store — stored and returned as-is, in whichever
     // encoding the calling protocol used to produce them. See
     // DECISIONS.md 0007.
@@ -60,7 +63,7 @@ pub struct Event {
 }
 
 // An Event as the Application supplies it: everything but the `vector_clock`
-// and `timestamp` the Store assigns at append time. See SPECIFICATION.md's
+// and `created_at` the Store assigns at append time. See SPECIFICATION.md's
 // Event schema.
 #[derive(Debug)]
 pub struct PendingEvent {
@@ -146,7 +149,7 @@ impl Store {
     }
 
     /// AppendEvent.01–.04/.09 — append an Event to the end of an existing
-    /// Stream, stamping it with this Node's next count for that Stream.
+    /// Stream, marking it with this Node's next count for that Stream.
     pub fn append_event(&mut self, stream_id: &str, event: PendingEvent) -> Result<Event, Error> {
         let Store {
             node_id,
@@ -170,7 +173,7 @@ impl Store {
             stream_id: stream_id.to_string(),
             vector_clock,
             event_type: event.event_type,
-            timestamp: clock.now().into(),
+            created_at: clock.now().into(),
             data: event.data,
             metadata: event.metadata,
         };
