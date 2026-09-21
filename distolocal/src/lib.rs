@@ -113,6 +113,21 @@ impl Store {
         }
     }
 
+    // The Stream record and its Events, as the Store holds them together.
+    // Every lookup of an existing Stream goes through here, so they all
+    // report a missing one the same way.
+    fn stream(&self, stream_id: &str) -> Result<&(Stream, Vec<Event>), Error> {
+        self.streams
+            .get(stream_id)
+            .ok_or_else(|| Self::stream_not_found(stream_id))
+    }
+
+    fn stream_not_found(stream_id: &str) -> Error {
+        Error::StreamNotFound {
+            stream_id: stream_id.to_string(),
+        }
+    }
+
     /// CreateStream.01/.02 — create a Stream if it doesn't exist yet;
     /// creating an already-open Stream again is idempotent and returns it
     /// unchanged.
@@ -131,6 +146,15 @@ impl Store {
         Ok(stream)
     }
 
+    /// GetStream.01/.03 — the Stream's own record: its id, status and
+    /// `created_at`, without its Events. A Stream that was never created is
+    /// a `StreamNotFound` error, as it is for `read_stream`.
+    pub fn get_stream(&self, stream_id: &str) -> Result<&Stream, Error> {
+        let (stream, _) = self.stream(stream_id)?;
+
+        Ok(stream)
+    }
+
     /// ReadStream.01/.02/.04 — all the Events in a Stream, in append order;
     /// an empty Stream reads as `[]`, but a Stream that was never created is
     /// a `StreamNotFound` error.
@@ -138,12 +162,7 @@ impl Store {
     /// The Events stay owned by the Store (DECISIONS.md 0013) — a caller that
     /// needs its own copy calls `.to_vec()`.
     pub fn read_stream(&self, stream_id: &str) -> Result<&[Event], Error> {
-        let (_, events) = self
-            .streams
-            .get(stream_id)
-            .ok_or_else(|| Error::StreamNotFound {
-                stream_id: stream_id.to_string(),
-            })?;
+        let (_, events) = self.stream(stream_id)?;
 
         Ok(events)
     }
@@ -158,9 +177,7 @@ impl Store {
         } = self;
         let (_, events) = streams
             .get_mut(stream_id)
-            .ok_or_else(|| Error::StreamNotFound {
-                stream_id: stream_id.to_string(),
-            })?;
+            .ok_or_else(|| Self::stream_not_found(stream_id))?;
 
         let mut vector_clock = events
             .last()
