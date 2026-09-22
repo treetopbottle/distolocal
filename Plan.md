@@ -140,21 +140,20 @@ values out of the snapshots afterwards.
 ### Step 7 — Approval-testing harness: one notation for Given and Then
 
 - **7a (the notation) [DONE]:** a Stream header line — quoted id, status,
-  `created_at` — then one line per Event (`created_at`, vector clock, type)
-  indented under it, with the payloads indented further again:
+  `created_at` — then one line per Event (`created_at`, type, vector clock)
+  indented under it, with the data and metadata indented further again:
 
   ```
   "chores-3f2a1c" open 2026-01-01T00:00:02Z
-    2026-01-01T00:00:03Z {node-a:1} TodoCreated
+    2026-01-01T00:00:03Z TodoCreated {node-a:1}
       data {"todo_id":1,"title":"Take out the trash"}
-    2026-01-01T00:00:04Z {node-a:2} TodoFinished
+    2026-01-01T00:00:04Z TodoFinished {node-a:2}
       data {"todo_id":1}
       metadata {"schema_version":"1.7.2"}
   ```
 
   The time leads each Event line because it is always the same width, so the
-  vector clocks line up in a column under each other and a variable-width
-  Event type can't push them out of alignment. Stream ids are quoted because
+  Event type lines up in a column under each other. Stream ids are quoted because
   the Application chooses them and nothing stops one holding a space; Event
   types are identifiers, so they stay bare.
   Vector clocks render as the map they are, sorted by node id so `HashMap`
