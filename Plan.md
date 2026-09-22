@@ -147,6 +147,7 @@ values out of the snapshots afterwards.
   "chores-3f2a1c" open 2026-01-01T00:00:02Z
     2026-01-01T00:00:03Z TodoCreated {node-a:1}
       data {"todo_id":1,"title":"Take out the trash"}
+      metadata {}
     2026-01-01T00:00:04Z TodoFinished {node-a:2}
       data {"todo_id":1}
       metadata {"schema_version":"1.7.2"}
@@ -158,9 +159,12 @@ values out of the snapshots afterwards.
   types are identifiers, so they stay bare.
   Vector clocks render as the map they are, sorted by node id so `HashMap`
   iteration order can't reorder them — today one entry, per DECISIONS.md
-  0005. `data` always renders (an Event without it is `InvalidEvent`);
-  `metadata` only when non-empty. Both take the rest of their line, so no
-  payload can collide with a field after it. `event_id` stays out: it is the
+  0005. `data` always renders (an Event without it is `InvalidEvent`), and
+  so does `metadata` — `{}` when the Event carries none, so every Event is
+  the same three lines. `{}` is therefore how the notation writes no
+  metadata: it parses back as none, and an Event whose metadata is literally
+  `{}` reads the same as one with none. Both payloads take the rest of their
+  line, so nothing in them can collide with a field after it. `event_id` stays out: it is the
   Application's idempotency key, not Stream content, and the tests that care
   about it (step 8) pin and assert it directly. An empty Stream is its header
   alone. Headers sit at column 0 with their Events indented beneath, so

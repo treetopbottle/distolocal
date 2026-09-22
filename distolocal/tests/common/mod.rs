@@ -2,6 +2,13 @@
 // separately, so helpers a given test file doesn't use would warn.
 #![allow(dead_code)]
 
+pub mod notation;
+
+// Re-exported so a test reads `use common::{dump, given}` alongside the
+// helpers below — and unused, like them, in a test file that needs neither.
+#[allow(unused_imports)]
+pub use notation::{dump, given};
+
 use distolocal::{Clock, Event, PendingEvent, Store};
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -71,6 +78,42 @@ impl Clock for SteppingClock {
     }
 }
 
+/// A clock that reads out `script` in order, then carries on stepping
+/// `step` from where the script left off — the clock `given()` builds from
+/// the times its text names (DECISIONS.md 0015).
+pub struct ScriptedClock {
+    script: Vec<OffsetDateTime>,
+    readings: Cell<usize>,
+    next: Cell<OffsetDateTime>,
+    step: Duration,
+}
+
+impl ScriptedClock {
+    pub fn new(script: Vec<OffsetDateTime>, step: Duration) -> Self {
+        ScriptedClock {
+            script,
+            readings: Cell::new(0),
+            next: Cell::new(START),
+            step,
+        }
+    }
+}
+
+impl Clock for ScriptedClock {
+    fn now(&self) -> OffsetDateTime {
+        let readings = self.readings.get();
+        let now = self
+            .script
+            .get(readings)
+            .copied()
+            .unwrap_or_else(|| self.next.get());
+
+        self.readings.set(readings + 1);
+        self.next.set(now + self.step);
+        now
+    }
+}
+
 /// A Store on the default test clock: `START`, a `STEP` per reading.
 pub fn store() -> Store {
     Store::new(NODE_ID, SteppingClock::default())
@@ -121,11 +164,25 @@ pub fn todo_finished(todo_id: u64) -> PendingEvent {
     pending_event("TodoFinished", &format!(r#"{{"todo_id":{todo_id}}}"#))
 }
 
-fn pending_event(event_type: &str, data: &str) -> PendingEvent {
+/// The same Event, carrying `metadata` — which the narrative Events don't,
+/// and which the notation renders only when it is there.
+pub fn with_metadata(event: PendingEvent, metadata: &str) -> PendingEvent {
+    PendingEvent {
+        metadata: metadata.as_bytes().to_vec(),
+        ..event
+    }
+}
+
+/// A distinct `event_id`, for the Events no test pins one on.
+pub fn next_event_id() -> String {
     static NEXT_EVENT_ID: AtomicU64 = AtomicU64::new(1);
 
+    format!("event-{}", NEXT_EVENT_ID.fetch_add(1, Ordering::Relaxed))
+}
+
+fn pending_event(event_type: &str, data: &str) -> PendingEvent {
     PendingEvent {
-        event_id: format!("event-{}", NEXT_EVENT_ID.fetch_add(1, Ordering::Relaxed)),
+        event_id: next_event_id(),
         event_type: event_type.to_string(),
         data: data.as_bytes().to_vec(),
         metadata: Vec::new(),

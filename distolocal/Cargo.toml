@@ -7,5 +7,6 @@ edition = "2024"
 time = { version = "0.3", features = ["formatting"] }
 
 [dev-dependencies]
-# `datetime!`, for the fixed instants the test clocks read.
-time = { version = "0.3", features = ["macros"] }
+# `datetime!`, for the fixed instants the test clocks read; `parsing`, for
+# the times `given()` reads back out of the dump notation.
+time = { version = "0.3", features = ["macros", "parsing"] }
