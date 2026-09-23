@@ -1,7 +1,7 @@
 mod common;
 
 use common::{
-    append, clock, dump, parse_store, store, store_with, todo_created, todo_finished,
+    append, clock, pprint_store, parse_store, store, store_with, todo_created, todo_finished,
     todo_list_created, with_metadata,
 };
 use distolocal::StreamStatus;
@@ -23,7 +23,7 @@ use distolocal::StreamStatus;
 fn dump_renders_an_empty_store_as_nothing() {
     let store = store();
 
-    assert_eq!(dump(&store), "");
+    assert_eq!(pprint_store(&store), "");
 }
 
 /// An empty Stream is its header alone: quoted id, status, `created_at`.
@@ -31,7 +31,7 @@ fn dump_renders_an_empty_store_as_nothing() {
 fn dump_renders_an_empty_stream_as_its_header() {
     let store = store_with(&["Groceries"]);
 
-    assert_eq!(dump(&store), r#""Groceries" open 2026-01-01T00:00:00Z"#);
+    assert_eq!(pprint_store(&store), r#""Groceries" open 2026-01-01T00:00:00Z"#);
 }
 
 /// Events indent under their Stream and both payload lines under them —
@@ -47,7 +47,7 @@ fn dump_renders_events_under_their_stream() {
     );
 
     assert_eq!(
-        dump(&store),
+        pprint_store(&store),
         r#""Chores" open 2026-01-01T00:00:00Z
   2026-01-01T00:00:01Z TodoCreated {node-a:1}
     data {"todo_id":1,"title":"Take out the trash"}
@@ -69,7 +69,7 @@ fn dump_renders_every_stream_in_the_order_they_were_created() {
     append(&mut store, "Lists", todo_list_created("Chores"));
 
     assert_eq!(
-        dump(&store),
+        pprint_store(&store),
         r#""Lists" open 2026-01-01T00:00:00Z
   2026-01-01T00:00:03Z TodoListCreated {node-a:1}
     data {"name":"Chores"}
@@ -178,7 +178,7 @@ fn parse_store_replays_every_stream_the_text_describes() {
     );
 
     assert_eq!(
-        dump(&store),
+        pprint_store(&store),
         r#""Lists" open 2026-01-01T00:00:00Z
   2026-01-01T00:00:01Z TodoListCreated {node-a:1}
     data {"name":"Chores"}
@@ -202,6 +202,6 @@ fn parse_store_reads_a_text_however_it_is_written() {
         "#,
     );
 
-    let dumped = dump(&store);
-    assert_eq!(dump(&parse_store(&dumped)), dumped);
+    let dumped = pprint_store(&store);
+    assert_eq!(pprint_store(&parse_store(&dumped)), dumped);
 }

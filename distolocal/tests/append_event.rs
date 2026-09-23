@@ -1,6 +1,6 @@
 mod common;
 
-use common::{dump, parse_store, todo_created, todo_finished, todo_list_created};
+use common::{pprint_store, parse_store, todo_created, todo_finished, todo_list_created};
 use distolocal::Error;
 use insta::assert_snapshot;
 
@@ -34,7 +34,7 @@ fn append_event_to_empty_stream() {
         appended,
         store.read_stream("Lists").expect("the Stream exists")[0]
     );
-    assert_snapshot!(dump(&store), @r#"
+    assert_snapshot!(pprint_store(&store), @r#"
     "Lists" open 2026-01-01T00:00:00Z
       2026-01-01T00:00:01Z TodoListCreated {node-a:1}
         data {"name":"Chores"}
@@ -58,7 +58,7 @@ fn append_event_to_single_stream() {
         .append_event("Chores", todo_created(1, "Take out the trash"))
         .expect("appending to an open Stream should succeed");
 
-    assert_snapshot!(dump(&store), @r#"
+    assert_snapshot!(pprint_store(&store), @r#"
     "Lists" open 2026-01-01T00:00:00Z
       2026-01-01T00:00:01Z TodoListCreated {node-a:1}
         data {"name":"Chores"}
@@ -88,7 +88,7 @@ fn append_event_to_stream_with_existing_events() {
         .append_event("Chores", todo_finished(1))
         .expect("appending to an open Stream should succeed");
 
-    assert_snapshot!(dump(&store), @r#"
+    assert_snapshot!(pprint_store(&store), @r#"
     "Chores" open 2026-01-01T00:00:00Z
       2026-01-01T00:00:01Z TodoCreated {node-a:1}
         data {"todo_id":1,"title":"Take out the trash"}

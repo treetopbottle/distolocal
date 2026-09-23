@@ -43,10 +43,8 @@ const NO_METADATA: &str = "{}";
 // so neither lookup can miss.
 const HELD: &str = "dumping a Stream the Store holds";
 
-/// Everything the Store holds, rendered in the notation: a block per
-/// Stream, in the order the Streams were created. An empty Store renders as
-/// nothing at all.
-pub fn dump(store: &Store) -> String {
+/// Pretty print a Store. Print every Stream for a Store and every Event in a Stream.
+pub fn pprint_store(store: &Store) -> String {
     let mut streams: Vec<&Stream> = store
         .stream_ids()
         .into_iter()
