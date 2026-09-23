@@ -296,3 +296,41 @@ clocks the text claims are still asserted against what the Store computes.
   pretending otherwise would hide in the test harness exactly what
   replication has to reason about.
 
+
+## 0016 — `dump` renders a whole Store, on a test-only `stream_ids`
+
+Accepted · 2026-09-23 · Technical · relates to 0010, 0011
+
+`dump(&store)` renders every Stream the Store holds — one block per Stream,
+in the order they were created — where 0011's `dump(&store, stream_id)`
+rendered one. It reaches them through `Store::stream_ids()`, a `#[doc(hidden)]`
+accessor that exists for the harness and has no `FeatureRule` behind it.
+
+- **Why:** a `Then` should show the state the `When` left behind, not the one
+  Stream the test remembered to ask for. An append that touches the wrong
+  Stream, or a later Delete Stream that takes a neighbour with it
+  (`DeleteStream.03`), is invisible to a per-Stream dump and obvious in a
+  whole-Store one. The notation was already built for it: headers sit at
+  column 0 so blocks concatenate (Plan.md step 7a), and `given` has read
+  several blocks since 7c — so this makes the two halves symmetrical, which
+  is what 0011 is for.
+- **Cost:** a public accessor added for test reasons, and one the Store's own
+  features never call. `#[doc(hidden)]` keeps it out of the docs but not out
+  of reach. Listing Streams is deliberately *not* a feature: an Application
+  that wants to know which Streams exist keeps a catalog Stream of its own —
+  the "Lists" Stream in SPECIFICATION.md's narrative — and adding a real
+  List Streams feature would contradict that design to serve a test harness.
+  Contrast 7b, where Get Stream was specified as a feature because an
+  Application genuinely needs it.
+- **Ordering:** by `created_at`, with the id settling the ties a non-stepping
+  clock can produce — so a dump reads in the order the Application wrote it
+  and a `Given` copied out of one describes its Streams in that same order.
+  Sorting by id instead — rejected: it would reorder the blocks out of the
+  `Given` they came from, so a reader could no longer diff a before against
+  an after block for block.
+- **Alternatives:** a `test-support` Cargo feature gating the accessor, so it
+  is compiled out of the production library — rejected as a Cargo feature and
+  a self-referencing dev-dependency to buy what a comment already says.
+  Tracking creation order inside the Store, rather than sorting on the way
+  out — rejected: a second copy of the Stream index for `delete_stream`
+  (step 11) to keep in step, for a test's benefit.

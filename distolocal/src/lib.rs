@@ -197,4 +197,16 @@ impl Store {
         events.push(appended.clone());
         Ok(appended)
     }
+
+    /// The id of every Stream the Store holds, in no particular order.
+    ///
+    /// Test-only: the whole-Store dump the notation renders (DECISIONS.md
+    /// 0011). An Application that wants to know which Streams exist keeps a
+    /// catalog Stream of its own — the "Lists" Stream in SPECIFICATION.md's
+    /// narrative — rather than asking the Store what it holds, so this is
+    /// not a feature and has no `FeatureRule` behind it.
+    #[doc(hidden)]
+    pub fn stream_ids(&self) -> Vec<&str> {
+        self.streams.keys().map(String::as_str).collect()
+    }
 }

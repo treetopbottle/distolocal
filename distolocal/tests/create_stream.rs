@@ -16,7 +16,7 @@ fn create_stream_that_does_not_exist() {
 
     // Then a Stream "Lists" exists, containing no Events — a header with
     // nothing indented under it.
-    assert_snapshot!(dump(&store, "Lists"), @r#""Lists" open 2026-01-01T00:00:00Z"#);
+    assert_snapshot!(dump(&store), @r#""Lists" open 2026-01-01T00:00:00Z"#);
 }
 
 /// CreateStream.02 — Creating a Stream that already exists is idempotent: it
@@ -46,5 +46,5 @@ fn create_stream_that_already_exists_is_idempotent() {
     // — and the Store still holds the Stream the Given describes, down to a
     // `created_at` the second call would have moved on had it reset it.
     assert_eq!(second, existing);
-    assert_snapshot!(dump(&store, "Lists"), @r#""Lists" open 2026-01-01T00:00:00Z"#);
+    assert_snapshot!(dump(&store), @r#""Lists" open 2026-01-01T00:00:00Z"#);
 }

@@ -1,9 +1,12 @@
 mod common;
 
-use common::{append, clock, dump, given, store_with, todo_created, todo_finished, with_metadata};
+use common::{
+    append, clock, dump, given, store, store_with, todo_created, todo_finished, todo_list_created,
+    with_metadata,
+};
 use distolocal::StreamStatus;
 
-// Plan.md step 7c — the harness, not a FeatureRule. `dump` renders a Stream
+// Plan.md step 7c — the harness, not a FeatureRule. `dump` renders a Store
 // in the step 7a notation and `given` parses the same notation back, so from
 // step 7d on a test's `Then` can be a snapshot of a dump and its `Given` the
 // same text. These tests are what says the two really are one notation; the
@@ -14,15 +17,21 @@ use distolocal::StreamStatus;
 // is where a dump's Stream header starts. A `given` text is indented to sit
 // with the code around it: it takes the common indentation off first.
 
+/// A Store holding no Streams renders as nothing at all — the same empty
+/// text `given` reads to build one.
+#[test]
+fn dump_renders_an_empty_store_as_nothing() {
+    let store = store();
+
+    assert_eq!(dump(&store), "");
+}
+
 /// An empty Stream is its header alone: quoted id, status, `created_at`.
 #[test]
 fn dump_renders_an_empty_stream_as_its_header() {
     let store = store_with(&["Groceries"]);
 
-    assert_eq!(
-        dump(&store, "Groceries"),
-        r#""Groceries" open 2026-01-01T00:00:00Z"#
-    );
+    assert_eq!(dump(&store), r#""Groceries" open 2026-01-01T00:00:00Z"#);
 }
 
 /// Events indent under their Stream and both payload lines under them —
@@ -38,7 +47,7 @@ fn dump_renders_events_under_their_stream() {
     );
 
     assert_eq!(
-        dump(&store, "Chores"),
+        dump(&store),
         r#""Chores" open 2026-01-01T00:00:00Z
   2026-01-01T00:00:01Z TodoCreated {node-a:1}
     data {"todo_id":1,"title":"Take out the trash"}
@@ -46,6 +55,29 @@ fn dump_renders_events_under_their_stream() {
   2026-01-01T00:00:02Z TodoFinished {node-a:2}
     data {"todo_id":1}
     metadata {"schema_version":"1.7.2"}"#
+    );
+}
+
+/// Every Stream the Store holds renders, one block after another, in the
+/// order the Streams were created rather than by id — so a dump reads in the
+/// order the Application wrote it, and a `Given` copied out of one describes
+/// its Streams in that same order.
+#[test]
+fn dump_renders_every_stream_in_the_order_they_were_created() {
+    let mut store = store_with(&["Lists", "Chores"]);
+    append(&mut store, "Chores", todo_created(1, "Take out the trash"));
+    append(&mut store, "Lists", todo_list_created("Chores"));
+
+    assert_eq!(
+        dump(&store),
+        r#""Lists" open 2026-01-01T00:00:00Z
+  2026-01-01T00:00:03Z TodoListCreated {node-a:1}
+    data {"name":"Chores"}
+    metadata {}
+"Chores" open 2026-01-01T00:00:01Z
+  2026-01-01T00:00:02Z TodoCreated {node-a:1}
+    data {"todo_id":1,"title":"Take out the trash"}
+    metadata {}"#
     );
 }
 
@@ -146,15 +178,12 @@ fn given_replays_every_stream_the_text_describes() {
     );
 
     assert_eq!(
-        dump(&store, "Lists"),
+        dump(&store),
         r#""Lists" open 2026-01-01T00:00:00Z
   2026-01-01T00:00:01Z TodoListCreated {node-a:1}
     data {"name":"Chores"}
-    metadata {}"#
-    );
-    assert_eq!(
-        dump(&store, "Chores"),
-        r#""Chores" open 2026-01-01T00:00:02Z
+    metadata {}
+"Chores" open 2026-01-01T00:00:02Z
   2026-01-01T00:00:03Z TodoCreated {node-a:1}
     data {"todo_id":1,"title":"Take out the trash"}
     metadata {}"#
@@ -173,6 +202,6 @@ fn given_reads_a_text_however_it_is_written() {
         "#,
     );
 
-    let dumped = dump(&store, "Chores");
-    assert_eq!(dump(&given(&dumped), "Chores"), dumped);
+    let dumped = dump(&store);
+    assert_eq!(dump(&given(&dumped)), dumped);
 }

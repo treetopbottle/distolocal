@@ -15,11 +15,12 @@
 // same thing to an Application. A hand-written `Given` may leave the line
 // out; a dump always writes it.
 //
-// `dump` renders a Stream in it; `given` parses it and replays it through
-// the Store's public API. It is not a serialization, import or export format
-// (DECISIONS.md 0011): a payload is rendered as the line of text it is in
-// these tests, so one that isn't UTF-8, or that holds a newline, has no
-// notation.
+// `dump` renders everything a Store holds in it — a block per Stream, which
+// is why headers sit at column 0; `given` parses the same text back and
+// replays it through the Store's public API. It is not a serialization,
+// import or export format (DECISIONS.md 0011): a payload is rendered as the
+// line of text it is in these tests, so one that isn't UTF-8, or that holds
+// a newline, has no notation.
 
 use super::{NODE_ID, STEP, ScriptedClock, next_event_id};
 use distolocal::{Event, PendingEvent, Store, Stream, StreamStatus};
@@ -38,15 +39,42 @@ const PAYLOAD_INDENT: usize = EVENT_INDENT * 2;
 // An Event that carries no metadata still renders its line, holding this.
 const NO_METADATA: &str = "{}";
 
-/// A Stream rendered in the notation: its header line, then its Events. An
-/// empty Stream is its header alone.
-pub fn dump(store: &Store, stream_id: &str) -> String {
-    let stream = store
-        .get_stream(stream_id)
-        .expect("dumping a Stream the Store holds");
-    let events = store
-        .read_stream(stream_id)
-        .expect("dumping a Stream the Store holds");
+// Both halves of a Stream are looked up by an id the Store itself listed,
+// so neither lookup can miss.
+const HELD: &str = "dumping a Stream the Store holds";
+
+/// Everything the Store holds, rendered in the notation: a block per
+/// Stream, in the order the Streams were created. An empty Store renders as
+/// nothing at all.
+pub fn dump(store: &Store) -> String {
+    let mut streams: Vec<&Stream> = store
+        .stream_ids()
+        .into_iter()
+        .map(|stream_id| store.get_stream(stream_id).expect(HELD))
+        .collect();
+    // The Store hands its ids back in its own order, so the dump puts the
+    // Streams back in the order they were created — the order a `Given`
+    // describes them in, so a before and an after line up block for block.
+    // Two Streams share a `created_at` only on a clock that doesn't step,
+    // and there the id settles it: either way the dump is stable.
+    streams.sort_by_key(|stream| {
+        (
+            parse_time(&stream.created_at.to_string()),
+            stream.stream_id.clone(),
+        )
+    });
+
+    streams
+        .iter()
+        .map(|stream| stream_block(store, stream))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// One Stream: its header line, then its Events. An empty Stream is its
+/// header alone, and headers sit at column 0, so the blocks concatenate.
+fn stream_block(store: &Store, stream: &Stream) -> String {
+    let events = store.read_stream(&stream.stream_id).expect(HELD);
 
     let mut lines = vec![stream_line(stream)];
     for event in events {
