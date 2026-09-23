@@ -114,11 +114,28 @@ impl Store {
     }
 
     // The Stream record and its Events, as the Store holds them together.
-    // Every lookup of an existing Stream goes through here, so they all
-    // report a missing one the same way.
+    // Every lookup of an existing Stream goes through here or `stream_mut`,
+    // so they all report a missing one the same way.
     fn stream(&self, stream_id: &str) -> Result<&(Stream, Vec<Event>), Error> {
         self.streams
             .get(stream_id)
+            .ok_or_else(|| Self::stream_not_found(stream_id))
+    }
+
+    // The same lookup, for an operation that goes on to change what it
+    // finds. Takes the map rather than `&mut self` so the caller can hold
+    // the Store's other fields — `node_id`, `clock` — across the borrow.
+    //
+    // Turning a Stream away for anything but being missing belongs in the
+    // operation, not here: a closed Stream still reads and still has a
+    // record (ReadStream.03, GetStream.02), and only Append and Create
+    // reject one (AppendEvent.06, CreateStream.03).
+    fn stream_mut<'a>(
+        streams: &'a mut HashMap<String, (Stream, Vec<Event>)>,
+        stream_id: &str,
+    ) -> Result<&'a mut (Stream, Vec<Event>), Error> {
+        streams
+            .get_mut(stream_id)
             .ok_or_else(|| Self::stream_not_found(stream_id))
     }
 
@@ -175,9 +192,7 @@ impl Store {
             clock,
             streams,
         } = self;
-        let (_, events) = streams
-            .get_mut(stream_id)
-            .ok_or_else(|| Self::stream_not_found(stream_id))?;
+        let (_, events) = Self::stream_mut(streams, stream_id)?;
 
         let mut vector_clock = events
             .last()
