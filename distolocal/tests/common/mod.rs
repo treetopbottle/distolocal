@@ -165,7 +165,7 @@ pub fn todo_finished(todo_id: u64) -> PendingEvent {
 }
 
 /// The same Event, carrying `metadata` — which the narrative Events don't,
-/// and which the notation renders only when it is there.
+/// and which the notation renders as `{}` for them.
 pub fn with_metadata(event: PendingEvent, metadata: &str) -> PendingEvent {
     PendingEvent {
         metadata: metadata.as_bytes().to_vec(),

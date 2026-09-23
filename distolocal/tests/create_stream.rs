@@ -1,7 +1,7 @@
 mod common;
 
-use common::store;
-use distolocal::StreamStatus;
+use common::{dump, given, store};
+use insta::assert_snapshot;
 
 /// CreateStream.01 — Creating a Stream that doesn't exist.
 #[test]
@@ -10,14 +10,13 @@ fn create_stream_that_does_not_exist() {
     let mut store = store();
 
     // When the Todo app creates a Stream "Lists"
-    let stream = store
+    store
         .create_stream("Lists")
         .expect("creating a new Stream should succeed");
 
-    // Then a Stream "Lists" exists, containing no Events — that it holds no
-    // Events is only checkable once ReadStream lands (Plan.md step 6).
-    assert_eq!(stream.stream_id, "Lists");
-    assert_eq!(stream.status, StreamStatus::Open);
+    // Then a Stream "Lists" exists, containing no Events — a header with
+    // nothing indented under it.
+    assert_snapshot!(dump(&store, "Lists"), @r#""Lists" open 2026-01-01T00:00:00Z"#);
 }
 
 /// CreateStream.02 — Creating a Stream that already exists is idempotent: it
@@ -25,10 +24,18 @@ fn create_stream_that_does_not_exist() {
 #[test]
 fn create_stream_that_already_exists_is_idempotent() {
     // Given a Stream "Lists" already exists, containing: []
-    let mut store = store();
-    let first = store
-        .create_stream("Lists")
-        .expect("creating a new Stream should succeed");
+    let mut store = given(
+        r#"
+        "Lists" open 2026-01-01T00:00:00Z
+        "#,
+    );
+    // The record the Store already holds. A returned value is not Stream
+    // state, so no dump can show it — this is what the second call's return
+    // is compared against.
+    let existing = store
+        .get_stream("Lists")
+        .expect("given should have created the Stream")
+        .clone();
 
     // When the Todo app creates a Stream "Lists" again
     let second = store
@@ -36,5 +43,8 @@ fn create_stream_that_already_exists_is_idempotent() {
         .expect("creating an already-open Stream again should succeed");
 
     // Then it succeeds again, returning the existing "Lists" Stream unchanged
-    assert_eq!(second, first);
+    // — and the Store still holds the Stream the Given describes, down to a
+    // `created_at` the second call would have moved on had it reset it.
+    assert_eq!(second, existing);
+    assert_snapshot!(dump(&store, "Lists"), @r#""Lists" open 2026-01-01T00:00:00Z"#);
 }

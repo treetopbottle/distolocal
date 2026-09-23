@@ -137,7 +137,7 @@ values out of the snapshots afterwards.
   than a `Store<C: Clock>` type parameter. Renaming the Event's `timestamp`
   to `created_at` came out of this step — see DECISIONS.md 0014.
 
-### Step 7 — Approval-testing harness: one notation for Given and Then
+### Step 7 — Approval-testing harness: one notation for Given and Then [DONE]
 
 - **7a (the notation) [DONE]:** a Stream header line — quoted id, status,
   `created_at` — then one line per Event (`created_at`, type, vector clock)
@@ -154,9 +154,9 @@ values out of the snapshots afterwards.
   ```
 
   The time leads each Event line because it is always the same width, so the
-  Event type lines up in a column under each other. Stream ids are quoted because
-  the Application chooses them and nothing stops one holding a space; Event
-  types are identifiers, so they stay bare.
+  Event type lines up in a column under each other. Stream ids are quoted
+  because the Application chooses them and nothing stops one holding a space;
+  Event types are identifiers, so they stay bare.
   Vector clocks render as the map they are, sorted by node id so `HashMap`
   iteration order can't reorder them — today one entry, per DECISIONS.md
   0005. `data` always renders (an Event without it is `InvalidEvent`), and
@@ -164,15 +164,19 @@ values out of the snapshots afterwards.
   the same three lines. `{}` is therefore how the notation writes no
   metadata: it parses back as none, and an Event whose metadata is literally
   `{}` reads the same as one with none. Both payloads take the rest of their
-  line, so nothing in them can collide with a field after it. `event_id` stays out: it is the
-  Application's idempotency key, not Stream content, and the tests that care
-  about it (step 8) pin and assert it directly. An empty Stream is its header
-  alone. Headers sit at column 0 with their Events indented beneath, so
-  blocks concatenate if a later step wants a whole-Store dump. A `Given`'s
-  times drive the Store's clock rather than being asserted against it — see
-  DECISIONS.md 0015.
+  line, so nothing in them can collide with a field after it. `event_id`
+  stays out: it is the Application's idempotency key, not Stream content, and
+  the tests that care about it (step 8) pin and assert it directly. An empty
+  Stream is its header alone. Headers sit at column 0 with their Events
+  indented beneath, so blocks concatenate if a later step wants a whole-Store
+  dump. A line says which of the three it is by its own shape — a quoted id,
+  a `data`/`metadata` field, or a time — so the indentation is the reader's
+  and not the parser's: a `Given` sits at whatever depth the code around it
+  does, and a dump goes straight back in as one (settled while building 7c).
+  A `Given`'s times drive the Store's clock rather than being asserted
+  against it — see DECISIONS.md 0015.
   → **checkpoint.**
-- **7b (Get Stream):** the header line needs a Stream's `status` and
+- **7b (Get Stream) [DONE]:** the header line needs a Stream's `status` and
   `created_at`, and no Store API hands them over — `read_stream` returns only
   Events, and `create_stream` is a write that will error on a closed Stream
   from step 10 on, which is exactly the case the header exists to show. So
@@ -187,17 +191,54 @@ values out of the snapshots afterwards.
   would renumber every later step out from under the references in
   DECISIONS.md 0010, 0011 and 0015.
   → **checkpoint.**
-- **7c (harness):** `dump(&store, "Chores")` renders that notation via
+  Landed as `get_stream`, mirroring `read_stream` — same lookup, same error,
+  same borrow (DECISIONS.md 0013). It hands back the record whatever the
+  status, which is what makes it the way to ask whether a Stream is still
+  open, so step 10 leaves it out of the `StreamClosed` wiring.
+- **7c (harness) [DONE]:** `dump(&store, "Chores")` renders that notation via
   `get_stream`/`read_stream`. `given("...")` parses the same notation and
   replays it through `create_stream`/`append_event`, asserting the Store
   assigns the vector clocks the text claims — so a `Given` block cannot
   quietly drift from what the Store would really produce, which is the
-  weakness DECISIONS.md 0009 accepts for comment-only Givens.
-- **7d (conversion):** restate the CreateStream and AppendEvent `Then`s as
-  inline `insta` snapshots, keeping the Given/When/Then comments. The field
-  assertions those tests have today are the check on the harness: the
-  snapshots must say the same thing before the assertions come out. Adds
-  `insta` as a dev-dependency.
+  weakness DECISIONS.md 0009 accepts for comment-only Givens. Three things
+  came out of building it, beyond the letter of this step:
+  - The harness has its own tests, in `tests/notation.rs`. 7d checks `dump`
+    against the field assertions the CreateStream and AppendEvent tests carry
+    today, but it never calls `given`, which would otherwise land untested.
+  - `given` reads several Stream blocks, since headers sit at column 0 for
+    exactly that reason, with one clock running across all of them.
+  - A `closed` header parses but panics on replay: Close Stream lands at
+    step 9, and replaying a closed Stream as an open one would make the test
+    lie.
+- **7d (conversion) [DONE]:** restate the CreateStream and AppendEvent
+  `Then`s as inline `insta` snapshots, keeping the Given/When/Then comments.
+  The field assertions those tests had were the check on the harness: the
+  snapshots must say the same thing before the assertions come out. The
+  ReadStream and GetStream tests keep their field assertions and don't
+  convert — the dump is built on both, so snapshotting them would be
+  circular (step 5a). Adds `insta` as a dev-dependency.
+  Every snapshot was hand-written and run beside the assertions it replaces
+  — the whole suite passed twice, once with both and once with the
+  assertions gone. Three assertions stayed, each for something a dump does
+  not render: `CreateStream.02`'s `second == first` (the record the call
+  hands back, not the Store's state), `AppendEvent.01`'s check that the Event
+  returned is the one stored (a dump reads the Store, and `event_id` is out
+  of the notation by 7a), and `AppendEvent.09`'s `StreamNotFound` (an
+  outcome, not a state — DECISIONS.md 0010).
+  The `Given`s convert too, wherever there is state to describe: a test that
+  starts from an existing Stream now arranges through `given()` text rather
+  than `store_with`/`append` calls, so its before and after stand in the same
+  notation and a reader diffs one against the other — which is what
+  DECISIONS.md 0011 is for. It also writes each time down instead of leaving
+  it to be counted off the clock's readings: `AppendEvent.02`'s `Given` shows
+  the append to "Lists" that its `Then`'s times otherwise only hint at. A
+  `Given` of "no Stream exists" stays a bare `store()` — there is nothing for
+  the notation to say. Converting the arrange didn't move the snapshots: .01,
+  .03 and .04 pass byte-identical to the versions the field assertions
+  checked, which is what says `given()` replays to the state the helper calls
+  built. Only `AppendEvent.02`'s Stream header moved, 00:00:01 → 00:00:02,
+  because a `Given` replays its Streams block by block where `store_with`
+  created both up front.
 
 ### Step 8 — Append Event: idempotency and validation
 
@@ -214,9 +255,13 @@ values out of the snapshots afterwards.
 
 - **9a (tests):** `CloseStream.01` (closing an already-closed Stream is a
   no-op), `CloseStream.02` (open → closed, Events unchanged), `CloseStream.03`
-  (`StreamNotFound` for a Stream that was never created).
+  (`StreamNotFound` for a Stream that was never created), and `GetStream.02`
+  (a closed Stream's record), held back from 7b because nothing could close a
+  Stream until now.
   → **checkpoint.**
-- **9b (implementation):** implement `close_stream`.
+- **9b (implementation):** implement `close_stream`, and replace the panic a
+  `closed` header hits in `given` (7c) with the `close_stream` call that
+  replays it.
 
 ### Step 10 — Enforce StreamClosed across Append/Read/Create
 
@@ -229,7 +274,9 @@ it:
   closed — Create is not a way to reopen).
   → **checkpoint.**
 - **10b (implementation):** add the closed-Stream checks to
-  `append_event`/`read_stream`/`create_stream`.
+  `append_event`/`read_stream`/`create_stream` — and to nothing else:
+  `get_stream` answers whatever the status (7b), which is how an Application
+  asks whether a Stream is still open.
 
 ### Step 11 — Delete Stream
 
