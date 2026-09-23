@@ -30,6 +30,10 @@ are separate, later concerns.
   an already-approved snapshot — never for filling in a blank left at (a).
   Recording a snapshot from a run and eyeballing it is approval *after* the
   fact, which would make the checkpoint meaningless.
+- **Tests carry no spec comments** (DECISIONS.md 0017). A test is named
+  `<function>_<situation>`, with no `FeatureRule` id or Given/When/Then
+  comments. At the checkpoint, the step's ids are matched to its tests by
+  name.
 - **The dump is test-only.** It exists to make `Given` and `Then` readable.
   It is not a serialization, import or export format, and nothing in it
   commits us to one — persistence stays a later slice (see "After this
