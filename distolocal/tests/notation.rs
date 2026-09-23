@@ -1,8 +1,8 @@
 mod common;
 
 use common::{
-    append, clock, dump, given, store, store_with, todo_created, todo_finished, todo_list_created,
-    with_metadata,
+    append, clock, dump, parse_store, store, store_with, todo_created, todo_finished,
+    todo_list_created, with_metadata,
 };
 use distolocal::StreamStatus;
 
@@ -84,8 +84,8 @@ fn dump_renders_every_stream_in_the_order_they_were_created() {
 /// `given` replays its text through the Store, so what the text describes is
 /// what the Store really holds — down to the times, which drive its clock.
 #[test]
-fn given_replays_the_text_through_the_store() {
-    let store = given(
+fn parse_store_replays_the_text_through_the_store() {
+    let store = parse_store(
         r#"
         "Chores" open 2026-01-01T00:00:02Z
           2026-01-01T00:00:03Z TodoCreated {node-a:1}
@@ -133,8 +133,8 @@ fn given_replays_the_text_through_the_store() {
 /// ones the Store assigns (DECISIONS.md 0011).
 #[test]
 #[should_panic(expected = "vector clock")]
-fn given_rejects_a_vector_clock_the_store_would_not_assign() {
-    given(
+fn parse_store_rejects_a_vector_clock_the_store_would_not_assign() {
+    parse_store(
         r#"
         "Chores" open 2026-01-01T00:00:02Z
           2026-01-01T00:00:03Z TodoCreated {node-a:7}
@@ -146,8 +146,8 @@ fn given_rejects_a_vector_clock_the_store_would_not_assign() {
 /// The clock carries on stepping from the last time the text names, so a
 /// `When` lands after everything its `Given` describes (DECISIONS.md 0015).
 #[test]
-fn given_leaves_the_clock_stepping_where_the_text_ended() {
-    let mut store = given(
+fn parse_store_leaves_the_clock_stepping_where_the_text_ended() {
+    let mut store = parse_store(
         r#"
         "Chores" open 2026-01-01T00:00:02Z
           2026-01-01T00:00:03Z TodoCreated {node-a:1}
@@ -163,8 +163,8 @@ fn given_leaves_the_clock_stepping_where_the_text_ended() {
 /// Stream headers sit at column 0, so one text can describe several Streams
 /// — each of which dumps back as the block it came from.
 #[test]
-fn given_replays_every_stream_the_text_describes() {
-    let store = given(
+fn parse_store_replays_every_stream_the_text_describes() {
+    let store = parse_store(
         r#"
         "Lists" open 2026-01-01T00:00:00Z
           2026-01-01T00:00:01Z TodoListCreated {node-a:1}
@@ -194,8 +194,8 @@ fn given_replays_every_stream_the_text_describes() {
 /// or a dump pasted back in at column 0 — the same text means the same
 /// thing.
 #[test]
-fn given_reads_a_text_however_it_is_written() {
-    let store = given(
+fn parse_store_reads_a_text_however_it_is_written() {
+    let store = parse_store(
         r#""Chores" open 2026-01-01T00:00:02Z
           2026-01-01T00:00:03Z TodoCreated {node-a:1}
             data {"todo_id":1,"title":"Take out the trash"}
@@ -203,5 +203,5 @@ fn given_reads_a_text_however_it_is_written() {
     );
 
     let dumped = dump(&store);
-    assert_eq!(dump(&given(&dumped)), dumped);
+    assert_eq!(dump(&parse_store(&dumped)), dumped);
 }

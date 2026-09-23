@@ -1,12 +1,12 @@
 mod common;
 
-use common::{dump, given, todo_created, todo_finished, todo_list_created};
+use common::{dump, parse_store, todo_created, todo_finished, todo_list_created};
 use distolocal::Error;
 use insta::assert_snapshot;
 
 #[test]
 fn append_event_to_stream_that_does_not_exist() {
-    let mut store = given("");
+    let mut store = parse_store("");
 
     let result = store.append_event("Groceries", todo_list_created("Groceries"));
 
@@ -20,7 +20,7 @@ fn append_event_to_stream_that_does_not_exist() {
 
 #[test]
 fn append_event_to_empty_stream() {
-    let mut store = given(
+    let mut store = parse_store(
         r#"
         "Lists" open 2026-01-01T00:00:00Z
         "#,
@@ -44,7 +44,7 @@ fn append_event_to_empty_stream() {
 
 #[test]
 fn append_event_to_single_stream() {
-    let mut store = given(
+    let mut store = parse_store(
         r#"
         "Lists" open 2026-01-01T00:00:00Z
           2026-01-01T00:00:01Z TodoListCreated {node-a:1}
@@ -72,7 +72,7 @@ fn append_event_to_single_stream() {
 
 #[test]
 fn append_event_to_stream_with_existing_events() {
-    let mut store = given(
+    let mut store = parse_store(
         r#"
         "Chores" open 2026-01-01T00:00:00Z
           2026-01-01T00:00:01Z TodoCreated {node-a:1}

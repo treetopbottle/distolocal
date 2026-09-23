@@ -1,6 +1,6 @@
 mod common;
 
-use common::{dump, given, store};
+use common::{dump, parse_store, store};
 use insta::assert_snapshot;
 
 /// CreateStream.01 — Creating a Stream that doesn't exist.
@@ -24,7 +24,7 @@ fn create_stream_that_does_not_exist() {
 #[test]
 fn create_stream_that_already_exists_is_idempotent() {
     // Given a Stream "Lists" already exists, containing: []
-    let mut store = given(
+    let mut store = parse_store(
         r#"
         "Lists" open 2026-01-01T00:00:00Z
         "#,

@@ -99,7 +99,7 @@ fn stream_block(store: &Store, stream: &Stream) -> String {
 /// the Store would really produce (DECISIONS.md 0011). The times the text
 /// names drive the Store's clock (DECISIONS.md 0015), which carries on
 /// stepping from the last of them once the text runs out.
-pub fn given(text: &str) -> Store {
+pub fn parse_store(text: &str) -> Store {
     let streams = parse(text);
     let script = streams
         .iter()
