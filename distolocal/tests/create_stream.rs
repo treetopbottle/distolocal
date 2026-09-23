@@ -1,6 +1,6 @@
 mod common;
 
-use common::{pprint_store, parse_store, store};
+use common::{parse_store, pprint_store, store};
 use insta::assert_snapshot;
 
 /// CreateStream.01 — Creating a Stream that doesn't exist.

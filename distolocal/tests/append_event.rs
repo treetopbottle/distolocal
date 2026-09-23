@@ -1,6 +1,6 @@
 mod common;
 
-use common::{pprint_store, parse_store, todo_created, todo_finished, todo_list_created};
+use common::{parse_store, pprint_store, todo_created, todo_finished, todo_list_created};
 use distolocal::Error;
 use insta::assert_snapshot;
 

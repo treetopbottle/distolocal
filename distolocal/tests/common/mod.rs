@@ -7,7 +7,7 @@ pub mod notation;
 // Re-exported so a test reads `use common::{dump, given}` alongside the
 // helpers below — and unused, like them, in a test file that needs neither.
 #[allow(unused_imports)]
-pub use notation::{pprint_store, parse_store};
+pub use notation::{parse_store, pprint_store};
 
 use distolocal::{Clock, Event, PendingEvent, Store};
 use std::cell::Cell;
