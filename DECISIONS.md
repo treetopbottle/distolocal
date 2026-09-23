@@ -143,7 +143,7 @@ Integration tests share setup and test data through plain helper functions in
 
 ## 0009 — Given/When/Then lives in comments, not in a test DSL
 
-Accepted · 2026-09-19 · Technical · relates to 0008
+Superseded by 0017 · 2026-09-19 · Technical · relates to 0008
 
 Each test carries its `FeatureRule.NN` id and SPECIFICATION.md's own
 Given/When/Then wording as comments above plain arrange/act/assert code.
@@ -334,3 +334,30 @@ accessor that exists for the harness and has no `FeatureRule` behind it.
   Tracking creation order inside the Store, rather than sorting on the way
   out — rejected: a second copy of the Stream index for `delete_stream`
   (step 11) to keep in step, for a test's benefit.
+
+## 0017 — A test says what it covers in its name, not in comments
+
+Accepted · 2026-09-23 · Technical · supersedes 0009 · relates to 0010, 0011
+
+A test carries no `FeatureRule.NN` id and no Given/When/Then comments. Its
+name gives the function and the situation — `<function>_<situation>`, as in
+`append_event_to_stream_that_does_not_exist` — and its body is plain
+arrange/act/assert. Where there is state to show, the `Given` and `Then` are
+written in the notation (0010, 0011) through `parse_store` and
+`pprint_store`, formerly `given` and `dump`. The spec's own wording lives only
+in SPECIFICATION.md. Tests of the test harness stay general: one test per
+behavior, not one per corner case.
+
+- **Why:** since 0011 a test's `Given` and `Then` are text the Store checks,
+  so the comments repeated what the code already showed — and could drift
+  from it, the gap 0009 accepted. Comments that name a Plan.md step or a
+  DECISIONS.md number record where a test came from, not what it checks, and
+  they go stale: the `dump`/`given` renames left several behind. The harness
+  is internal to the tests, so a general test of each behavior is enough.
+- **Cost:** nothing ties a test to its `FeatureRule` id any more, so finding
+  the test for `AppendEvent.04`, or noticing a rule with no test, means
+  reading test names rather than searching for the id. A step's checkpoint is
+  where its ids are matched to tests.
+- **Alternatives:** 0009's comments, kept or cut down to a bare
+  `// AppendEvent.04` id line. 0009 already names the `World` DSL and
+  `cucumber` as the heavier options.
