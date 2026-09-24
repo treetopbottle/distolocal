@@ -4,112 +4,41 @@
 
 pub mod notation;
 
-// Re-exported so a test reads `use common::{dump, given}` alongside the
-// helpers below — and unused, like them, in a test file that needs neither.
 #[allow(unused_imports)]
 pub use notation::{parse_store, pprint_store};
 
 use distolocal::{Clock, Event, PendingEvent, Store};
 use std::cell::Cell;
-use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use time::macros::datetime;
 use time::{Duration, OffsetDateTime};
 
 pub const NODE_ID: &str = "node-a";
 
-/// The instant a test clock starts at unless the test says otherwise.
+/// The instant a test clock starts at.
 pub const START: OffsetDateTime = datetime!(2026-01-01 00:00:00 UTC);
 
-/// How far `SteppingClock` advances per reading unless the test says
-/// otherwise.
+/// How far `SteppingClock` advances per reading.
 pub const STEP: Duration = Duration::seconds(1);
 
-/// A clock frozen at one instant: every reading is the same.
-pub struct FixedClock {
-    reading: OffsetDateTime,
-}
-
-impl FixedClock {
-    pub fn new(reading: OffsetDateTime) -> Self {
-        FixedClock { reading }
-    }
-}
-
-impl Default for FixedClock {
-    fn default() -> Self {
-        FixedClock::new(START)
-    }
-}
-
-impl Clock for FixedClock {
-    fn now(&self) -> OffsetDateTime {
-        self.reading
-    }
-}
-
-/// A clock that reads `start` first and advances `step` per reading, so
-/// every time the Store records in a test is distinct and in call order.
+/// A clock that reads `START` first and advances `STEP` per reading, so every
+/// time the Store records in a test is distinct and in call order.
 pub struct SteppingClock {
     next: Cell<OffsetDateTime>,
-    step: Duration,
-}
-
-impl SteppingClock {
-    pub fn new(start: OffsetDateTime, step: Duration) -> Self {
-        SteppingClock {
-            next: Cell::new(start),
-            step,
-        }
-    }
 }
 
 impl Default for SteppingClock {
     fn default() -> Self {
-        SteppingClock::new(START, STEP)
+        SteppingClock {
+            next: Cell::new(START),
+        }
     }
 }
 
 impl Clock for SteppingClock {
     fn now(&self) -> OffsetDateTime {
         let now = self.next.get();
-        self.next.set(now + self.step);
-        now
-    }
-}
-
-/// A clock that reads out `script` in order, then carries on stepping
-/// `step` from where the script left off — the clock `given()` builds from
-/// the times its text names (DECISIONS.md 0015).
-pub struct ScriptedClock {
-    script: Vec<OffsetDateTime>,
-    readings: Cell<usize>,
-    next: Cell<OffsetDateTime>,
-    step: Duration,
-}
-
-impl ScriptedClock {
-    pub fn new(script: Vec<OffsetDateTime>, step: Duration) -> Self {
-        ScriptedClock {
-            script,
-            readings: Cell::new(0),
-            next: Cell::new(START),
-            step,
-        }
-    }
-}
-
-impl Clock for ScriptedClock {
-    fn now(&self) -> OffsetDateTime {
-        let readings = self.readings.get();
-        let now = self
-            .script
-            .get(readings)
-            .copied()
-            .unwrap_or_else(|| self.next.get());
-
-        self.readings.set(readings + 1);
-        self.next.set(now + self.step);
+        self.next.set(now + STEP);
         now
     }
 }
@@ -137,17 +66,7 @@ pub fn append(store: &mut Store, stream_id: &str, event: PendingEvent) -> Event 
         .expect("appending to an open Stream should succeed")
 }
 
-/// The vector clock this Node assigns to the `count`-th Event in a Stream.
-/// Under DECISIONS.md 0005 it is the map's only entry.
-pub fn clock(count: u64) -> HashMap<String, u64> {
-    HashMap::from([(NODE_ID.to_string(), count)])
-}
-
-// The Events from SPECIFICATION.md's "Annabel and the Todo Application"
-// narrative, taking the arguments the narrative names. The Application
-// generates an `event_id` per Event (SPECIFICATION.md Event schema), so these
-// do too — no test needs to see it until Plan.md step 8 pins one to test
-// idempotency.
+// The Events from SPECIFICATION.md's Todo narrative.
 
 pub fn todo_list_created(name: &str) -> PendingEvent {
     pending_event("TodoListCreated", &format!(r#"{{"name":"{name}"}}"#))
@@ -164,8 +83,7 @@ pub fn todo_finished(todo_id: u64) -> PendingEvent {
     pending_event("TodoFinished", &format!(r#"{{"todo_id":{todo_id}}}"#))
 }
 
-/// The same Event, carrying `metadata` — which the narrative Events don't,
-/// and which the notation renders as `{}` for them.
+/// The same Event, carrying `metadata`.
 pub fn with_metadata(event: PendingEvent, metadata: &str) -> PendingEvent {
     PendingEvent {
         metadata: metadata.as_bytes().to_vec(),

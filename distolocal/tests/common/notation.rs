@@ -22,13 +22,49 @@
 // line of text it is in these tests, so one that isn't UTF-8, or that holds
 // a newline, has no notation.
 
-use super::{NODE_ID, STEP, ScriptedClock, next_event_id};
-use distolocal::{Event, PendingEvent, Store, Stream, StreamStatus};
+use super::{NODE_ID, START, STEP, next_event_id};
+use distolocal::{Clock, Event, PendingEvent, Store, Stream, StreamStatus};
+use std::cell::Cell;
 use std::collections::HashMap;
 use std::iter;
 use std::str;
-use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
+use time::{Duration, OffsetDateTime};
+
+/// A clock that reads out `script` in order, then carries on stepping `step`
+/// from where the script left off.
+struct ScriptedClock {
+    script: Vec<OffsetDateTime>,
+    readings: Cell<usize>,
+    next: Cell<OffsetDateTime>,
+    step: Duration,
+}
+
+impl ScriptedClock {
+    fn new(script: Vec<OffsetDateTime>, step: Duration) -> Self {
+        ScriptedClock {
+            script,
+            readings: Cell::new(0),
+            next: Cell::new(START),
+            step,
+        }
+    }
+}
+
+impl Clock for ScriptedClock {
+    fn now(&self) -> OffsetDateTime {
+        let readings = self.readings.get();
+        let now = self
+            .script
+            .get(readings)
+            .copied()
+            .unwrap_or_else(|| self.next.get());
+
+        self.readings.set(readings + 1);
+        self.next.set(now + self.step);
+        now
+    }
+}
 
 // How far `dump` indents an Event under its Stream's header line, and a
 // payload under its Event. A header stays at column 0, so dumped Streams
