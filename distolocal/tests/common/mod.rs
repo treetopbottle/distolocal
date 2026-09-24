@@ -7,7 +7,7 @@ pub mod notation;
 #[allow(unused_imports)]
 pub use notation::{parse_store, pprint_events, pprint_store, pprint_stream};
 
-use distolocal::{Clock, Event, PendingEvent, Store};
+use distolocal::{Clock, PendingEvent, Store};
 use std::cell::Cell;
 use std::sync::atomic::{AtomicU64, Ordering};
 use time::macros::datetime;
@@ -57,13 +57,6 @@ pub fn store_with(stream_ids: &[&str]) -> Store {
             .expect("creating a new Stream should succeed");
     }
     store
-}
-
-/// Append as an arrange step, where the call itself isn't what's under test.
-pub fn append(store: &mut Store, stream_id: &str, event: PendingEvent) -> Event {
-    store
-        .append_event(stream_id, event)
-        .expect("appending to an open Stream should succeed")
 }
 
 // The Events from SPECIFICATION.md's Todo narrative.

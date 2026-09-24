@@ -1,6 +1,6 @@
 mod common;
 
-use common::{append, pprint_events, store, store_with, todo_created, todo_finished};
+use common::{pprint_events, store, store_with, todo_created, todo_finished};
 use distolocal::Error;
 use insta::assert_snapshot;
 
@@ -32,9 +32,15 @@ fn read_stream_that_is_empty() {
 #[test]
 fn read_stream_with_events() {
     let mut store = store_with(&["Chores"]);
-    append(&mut store, "Chores", todo_created(1, "Take out the trash"));
-    append(&mut store, "Chores", todo_created(2, "Wash the dishes"));
-    append(&mut store, "Chores", todo_finished(1));
+    store
+        .append_event("Chores", todo_created(1, "Take out the trash"))
+        .expect("appending to an open Stream should succeed");
+    store
+        .append_event("Chores", todo_created(2, "Wash the dishes"))
+        .expect("appending to an open Stream should succeed");
+    store
+        .append_event("Chores", todo_finished(1))
+        .expect("appending to an open Stream should succeed");
 
     let events = store
         .get_events("Chores")

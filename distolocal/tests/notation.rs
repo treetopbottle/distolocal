@@ -6,8 +6,8 @@
 mod common;
 
 use common::{
-    append, parse_store, pprint_store, store, store_with, todo_created, todo_finished,
-    todo_list_created, with_metadata,
+    parse_store, pprint_store, store, store_with, todo_created, todo_finished, todo_list_created,
+    with_metadata,
 };
 
 #[test]
@@ -30,13 +30,18 @@ fn pprint_store_empty_stream() {
 #[test]
 fn pprint_store_renders_streams_and_events() {
     let mut store = store_with(&["Lists", "Chores"]);
-    append(&mut store, "Chores", todo_created(1, "Take out the trash"));
-    append(&mut store, "Lists", todo_list_created("Chores"));
-    append(
-        &mut store,
-        "Chores",
-        with_metadata(todo_finished(1), r#"{"schema_version":"1.7.2"}"#),
-    );
+    store
+        .append_event("Chores", todo_created(1, "Take out the trash"))
+        .expect("appending to an open Stream should succeed");
+    store
+        .append_event("Lists", todo_list_created("Chores"))
+        .expect("appending to an open Stream should succeed");
+    store
+        .append_event(
+            "Chores",
+            with_metadata(todo_finished(1), r#"{"schema_version":"1.7.2"}"#),
+        )
+        .expect("appending to an open Stream should succeed");
 
     assert_eq!(
         pprint_store(&store),

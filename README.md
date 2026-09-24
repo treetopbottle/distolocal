@@ -34,7 +34,7 @@ These are the domain entities. The convention is to capitalize them.
 ## Core use cases (components)
 
 - Event and Stream management
-    + Append Event; create Stream; read Events in Stream; close Stream; delete Stream
+    + Append Event; create Stream; read Events; close Stream; delete Stream
     + Event data is opaque to Distolocal
 - Stream subscription
     + Push Event; Event hooks

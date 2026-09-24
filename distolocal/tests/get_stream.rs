@@ -1,6 +1,6 @@
 mod common;
 
-use common::{append, pprint_stream, store, store_with, todo_created};
+use common::{pprint_stream, store, store_with, todo_created};
 use distolocal::Error;
 use insta::assert_snapshot;
 
@@ -21,7 +21,9 @@ fn get_stream_that_does_not_exist() {
 #[test]
 fn get_stream_that_is_open() {
     let mut store = store_with(&["Chores"]);
-    append(&mut store, "Chores", todo_created(1, "Take out the trash"));
+    store
+        .append_event("Chores", todo_created(1, "Take out the trash"))
+        .expect("appending to an open Stream should succeed");
 
     let stream = store
         .get_stream("Chores")
