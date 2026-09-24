@@ -32,7 +32,7 @@ fn append_event_to_empty_stream() {
 
     assert_eq!(
         appended,
-        store.read_stream("Lists").expect("the Stream exists")[0]
+        store.get_events("Lists").expect("the Stream exists")[0]
     );
     assert_snapshot!(pprint_store(&store), @r#"
     "Lists" open 2026-01-01T00:00:00Z

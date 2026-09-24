@@ -147,7 +147,7 @@ impl Store {
 
     /// All the Events in a Stream, in append order. The Events stay owned by
     /// the Store; call `.to_vec()` for a copy.
-    pub fn read_stream(&self, stream_id: &str) -> Result<&[Event], Error> {
+    pub fn get_events(&self, stream_id: &str) -> Result<&[Event], Error> {
         let (_, events) = self.stream(stream_id)?;
 
         Ok(events)

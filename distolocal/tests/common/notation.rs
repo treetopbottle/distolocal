@@ -81,7 +81,7 @@ pub fn pprint_store(store: &Store) -> String {
 
     streams
         .iter()
-        .map(|stream| stream_block(store, stream))
+        .map(|stream| pprint_stream(store, stream))
         .collect::<Vec<_>>()
         .join("\n")
 }
@@ -106,52 +106,52 @@ pub fn parse_store(text: &str) -> Store {
     store
 }
 
-fn stream_block(store: &Store, stream: &Stream) -> String {
+fn pprint_stream(store: &Store, stream: &Stream) -> String {
     let events = store
-        .read_stream(&stream.stream_id)
+        .get_events(&stream.stream_id)
         .expect("the Store holds the Stream");
 
-    let mut lines = vec![stream_line(stream)];
+    let mut lines = vec![pprint_stream_header(stream)];
     for event in events {
-        lines.push(event_line(event));
-        lines.push(payload_line("data", &event.data));
+        lines.push(pprint_event(event));
+        lines.push(pprint_data("data", &event.data));
         let metadata = if event.metadata.is_empty() {
             NO_METADATA.as_bytes()
         } else {
             &event.metadata
         };
-        lines.push(payload_line("metadata", metadata));
+        lines.push(pprint_data("metadata", metadata));
     }
 
     lines.join("\n")
 }
 
-fn stream_line(stream: &Stream) -> String {
+fn pprint_stream_header(stream: &Stream) -> String {
     format!(
         "\"{}\" {} {}",
         stream.stream_id,
-        status(&stream.status),
+        pprint_status(&stream.status),
         stream.created_at
     )
 }
 
-fn status(status: &StreamStatus) -> &'static str {
+fn pprint_status(status: &StreamStatus) -> &'static str {
     match status {
         StreamStatus::Open => "open",
         StreamStatus::Closed => "closed",
     }
 }
 
-fn event_line(event: &Event) -> String {
+fn pprint_event(event: &Event) -> String {
     format!(
         "  {} {} {}",
         event.created_at,
         event.event_type,
-        vector_clock(&event.vector_clock)
+        pprint_vector_clock(&event.vector_clock)
     )
 }
 
-fn vector_clock(vector_clock: &HashMap<String, u64>) -> String {
+fn pprint_vector_clock(vector_clock: &HashMap<String, u64>) -> String {
     let mut counts: Vec<_> = vector_clock
         .iter()
         .map(|(node_id, count)| format!("{node_id}:{count}"))
@@ -161,8 +161,8 @@ fn vector_clock(vector_clock: &HashMap<String, u64>) -> String {
     format!("{{{}}}", counts.join(","))
 }
 
-fn payload_line(field: &str, payload: &[u8]) -> String {
-    let payload = str::from_utf8(payload).expect("a payload the notation can render is text");
+fn pprint_data(field: &str, data: &[u8]) -> String {
+    let payload = str::from_utf8(data).expect("a data the notation can render is text");
 
     format!("    {field} {payload}")
 }

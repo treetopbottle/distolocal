@@ -7,7 +7,7 @@ use distolocal::Error;
 fn read_stream_that_does_not_exist() {
     let store = store();
 
-    let result = store.read_stream("Groceries");
+    let result = store.get_events("Groceries");
 
     assert_eq!(
         result,
@@ -22,7 +22,7 @@ fn read_stream_that_is_empty() {
     let store = store_with(&["Groceries"]);
 
     let events = store
-        .read_stream("Groceries")
+        .get_events("Groceries")
         .expect("reading an existing Stream should succeed");
 
     assert!(events.is_empty());
@@ -36,7 +36,7 @@ fn read_stream_with_events() {
     let finished_1 = append(&mut store, "Chores", todo_finished(1));
 
     let events = store
-        .read_stream("Chores")
+        .get_events("Chores")
         .expect("reading an existing Stream should succeed");
 
     assert_eq!(events, vec![created_1, created_2, finished_1]);
