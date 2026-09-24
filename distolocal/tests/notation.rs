@@ -11,7 +11,7 @@ use common::{
 };
 
 #[test]
-fn pprint_store_empty_string() {
+fn pprint_store_empty_store() {
     let store = store();
 
     assert_eq!(pprint_store(&store), "");
