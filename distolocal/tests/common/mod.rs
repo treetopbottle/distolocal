@@ -5,7 +5,7 @@
 pub mod notation;
 
 #[allow(unused_imports)]
-pub use notation::{parse_store, pprint_store};
+pub use notation::{parse_store, pprint_events, pprint_store, pprint_stream};
 
 use distolocal::{Clock, Event, PendingEvent, Store};
 use std::cell::Cell;

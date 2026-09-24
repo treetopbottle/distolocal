@@ -186,6 +186,12 @@ Stream's rendered state rather than a list of field assertions.
   fact, hollowing out the checkpoint.
 - **Exception:** `read_stream`'s own tests keep direct field assertions, since
   the dump is built on `read_stream` and snapshotting them would be circular.
+- **Narrowed 2026-09-24:** the ReadStream and GetStream tests now snapshot the
+  value the call returns, rendered by `pprint_events` and `pprint_stream`.
+  Those only format what they are given and never read the Store, so the check
+  is not circular. What stays excluded is snapshotting `pprint_store` in those
+  tests, since it is built on both calls. The snapshots leave out `event_id`,
+  which the notation does not render and the field assertions used to compare.
 - **Alternatives:** `expect-test` (inline only, `UPDATE_EXPECT=1`) — `insta`
   picked for its `.snap` files, redactions and review workflow, should those
   be wanted later. Keeping field assertions throughout — rejected as

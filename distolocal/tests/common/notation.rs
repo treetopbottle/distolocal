@@ -81,7 +81,26 @@ pub fn pprint_store(store: &Store) -> String {
 
     streams
         .iter()
-        .map(|stream| pprint_stream(store, stream))
+        .map(|stream| pprint_stream_with_events(store, stream))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Pretty print a Stream's record: its header line in `pprint_store`.
+pub fn pprint_stream(stream: &Stream) -> String {
+    format!(
+        "\"{}\" {} {}",
+        stream.stream_id,
+        pprint_status(&stream.status),
+        stream.created_at
+    )
+}
+
+/// Pretty print Events as they sit under their Stream's header in `pprint_store`.
+pub fn pprint_events(events: &[Event]) -> String {
+    events
+        .iter()
+        .map(pprint_event)
         .collect::<Vec<_>>()
         .join("\n")
 }
@@ -106,33 +125,15 @@ pub fn parse_store(text: &str) -> Store {
     store
 }
 
-fn pprint_stream(store: &Store, stream: &Stream) -> String {
+fn pprint_stream_with_events(store: &Store, stream: &Stream) -> String {
     let events = store
         .get_events(&stream.stream_id)
         .expect("the Store holds the Stream");
 
-    let mut lines = vec![pprint_stream_header(stream)];
-    for event in events {
-        lines.push(pprint_event(event));
-        lines.push(pprint_data("data", &event.data));
-        let metadata = if event.metadata.is_empty() {
-            NO_METADATA.as_bytes()
-        } else {
-            &event.metadata
-        };
-        lines.push(pprint_data("metadata", metadata));
-    }
-
-    lines.join("\n")
-}
-
-fn pprint_stream_header(stream: &Stream) -> String {
-    format!(
-        "\"{}\" {} {}",
-        stream.stream_id,
-        pprint_status(&stream.status),
-        stream.created_at
-    )
+    iter::once(pprint_stream(stream))
+        .chain(events.iter().map(pprint_event))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 fn pprint_status(status: &StreamStatus) -> &'static str {
@@ -143,12 +144,23 @@ fn pprint_status(status: &StreamStatus) -> &'static str {
 }
 
 fn pprint_event(event: &Event) -> String {
-    format!(
-        "  {} {} {}",
-        event.created_at,
-        event.event_type,
-        pprint_vector_clock(&event.vector_clock)
-    )
+    let metadata = if event.metadata.is_empty() {
+        NO_METADATA.as_bytes()
+    } else {
+        &event.metadata
+    };
+
+    [
+        format!(
+            "  {} {} {}",
+            event.created_at,
+            event.event_type,
+            pprint_vector_clock(&event.vector_clock)
+        ),
+        pprint_data("data", &event.data),
+        pprint_data("metadata", metadata),
+    ]
+    .join("\n")
 }
 
 fn pprint_vector_clock(vector_clock: &HashMap<String, u64>) -> String {

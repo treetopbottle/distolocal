@@ -1,7 +1,8 @@
 mod common;
 
-use common::{append, store, store_with, todo_created};
-use distolocal::{Error, StreamStatus};
+use common::{append, pprint_stream, store, store_with, todo_created};
+use distolocal::Error;
+use insta::assert_snapshot;
 
 #[test]
 fn get_stream_that_does_not_exist() {
@@ -26,7 +27,5 @@ fn get_stream_that_is_open() {
         .get_stream("Chores")
         .expect("getting an existing Stream should succeed");
 
-    assert_eq!(stream.stream_id, "Chores");
-    assert_eq!(stream.status, StreamStatus::Open);
-    assert_eq!(stream.created_at.to_string(), "2026-01-01T00:00:00Z");
+    assert_snapshot!(pprint_stream(stream), @r#""Chores" open 2026-01-01T00:00:00Z"#);
 }
