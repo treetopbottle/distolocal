@@ -177,7 +177,7 @@ impl Store {
         Ok(appended)
     }
 
-    /// Test-only: every Stream id, in no particular order, for `pprint_store`.
+    /// Test-only: every Stream id, in no particular order.
     #[doc(hidden)]
     pub fn stream_ids(&self) -> Vec<&str> {
         self.streams.keys().map(String::as_str).collect()
