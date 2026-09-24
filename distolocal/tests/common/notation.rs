@@ -168,6 +168,13 @@ fn payload_line(field: &str, payload: &[u8]) -> String {
 }
 
 fn replay(store: &mut Store, stream: &ParsedStream) {
+    // `create_stream` returns an existing Stream without reading the clock,
+    // which would leave that block's time in the script for the next reading.
+    assert!(
+        store.get_stream(&stream.stream_id).is_err(),
+        "parse_store: the Stream {:?} appears twice",
+        stream.stream_id
+    );
     store
         .create_stream(&stream.stream_id)
         .expect("creating a new Stream should succeed");
