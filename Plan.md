@@ -314,6 +314,16 @@ it:
   — if it doesn't, that's a sign a rule was missed earlier, not a new
   feature to build.
 
+### Step 14: Double check specification rules
+
+- **14:** Check if the rules specified in SPECIFICATION.md, including the 
+  examples, are well represented in the tests. Also check if there is a better
+  way to describe them including the given/when/then tests. There are a lot of
+  rules and examples, which makes it a bit harder to read. There might be overlap
+  in the rules and the tests might not contain all the rules. It would also be
+  good if the notation used in the SPECIFICATION.md matches the one used in the
+  snapshot tests.
+
 ---
 
 ## After this plan
