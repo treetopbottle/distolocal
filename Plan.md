@@ -325,15 +325,17 @@ it:
   needs (DECISIONS.md 0022). No new tests: the notation and clock tests cover
   both.
 
-### Step 11 — Delete Stream
+### Step 11 — Delete Stream [DONE]
 
-- **11a (tests):** `DeleteStream.01` (`StreamNotClosed` when deleting an open
+- **11a (tests) [DONE]:** `DeleteStream.01` (`StreamNotClosed` when deleting an open
   Stream), `DeleteStream.02` (deleting a closed Stream removes it and its
   Events), `DeleteStream.04` (`StreamNotFound` when deleting a Stream that
   doesn't exist, whether never created or already deleted — changed at this
   checkpoint from "succeeds", DECISIONS.md 0023).
   → **checkpoint.**
-- **11b (implementation):** implement `delete_stream`.
+- **11b (implementation) [DONE]:** implement `delete_stream`, returning
+  `()`: once the Stream is gone there is nothing to hand back. An open Stream
+  is checked before anything is removed.
 
 ### Step 12 — Delete/Create interplay across Streams
 

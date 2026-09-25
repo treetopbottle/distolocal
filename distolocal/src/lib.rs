@@ -189,6 +189,21 @@ impl Store {
         Ok(stream.clone())
     }
 
+    /// Deletes a closed Stream and its Events. The Store keeps no record of
+    /// it, so deleting it again is `StreamNotFound`, as for an id never
+    /// created.
+    pub fn delete_stream(&mut self, stream_id: &str) -> Result<(), Error> {
+        let (stream, _) = self.stream(stream_id)?;
+
+        if stream.status == StreamStatus::Open {
+            return Err(Error::StreamNotClosed {
+                stream_id: stream_id.to_string(),
+            });
+        }
+        self.streams.remove(stream_id);
+        Ok(())
+    }
+
     /// Appends an Event to an existing, open Stream, marking it with this
     /// Node's next count for that Stream. An `event_id` the Stream already
     /// holds is a conflict, whatever the rest of the Event says.
