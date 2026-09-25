@@ -30,7 +30,8 @@ _Initial suggestion — not yet validated against Stream subscription or Node re
 {
   "stream_id": "string", // sole identifier, chosen by the Application when it creates the Stream
   "status": "open | closed", // see Close Stream; a deleted Stream simply no longer exists
-  "created_at": "ISO8601"
+  "created_at": "ISO8601",
+  "closed_at": "ISO8601 | null" // assigned by the Store when the Stream closes, from its own clock; null while the Stream is open (see DECISIONS.md 0020)
 }
 ```
 
@@ -262,7 +263,7 @@ Then it receives the record for "Chores", with status open
 ```
 Given the Stream "Chores" is closed
 When the Todo app gets the Stream "Chores"
-Then it receives the record for "Chores", with status closed
+Then it receives the record for "Chores", with status closed and the time it closed
 ```
 
 **Rule: rejected with a `StreamNotFound` error if the Stream was never created, or was deleted**
@@ -282,14 +283,14 @@ Then the get fails with a StreamNotFound error
 ```
 Given the Stream "Chores" is closed
 When the Todo app closes "Chores" again
-Then it succeeds again with no error
+Then it succeeds again with no error, and "Chores" keeps the time it was first closed
 ```
 
 **`CloseStream.02`** Closing an open Stream
 ```
 Given the Stream "Chores" contains: [TodoCreated#1, TodoCreated#2, TodoFinished#1]
 When the Todo app closes the Stream "Chores"
-Then the Stream "Chores" is closed; its Events are unchanged and still readable
+Then the Stream "Chores" is closed, recording the time it closed; its Events are unchanged and still readable
 ```
 
 **Rule: rejected with a `StreamNotFound` error if the target Stream was never created**

@@ -420,3 +420,30 @@ An HTTP adapter maps the error to 409 Conflict.
   is between an Application and its own Node, which replication never sees.
   Replication will need its own dedup by `event_id`, and can build on this
   check.
+
+
+## 0020 — A Stream records when it was closed
+
+Accepted · 2026-09-25 · Technical · relates to 0012, 0015
+
+A Stream carries `closed_at`, the time Close Stream closed it: `null` while
+it is open, and set by the Store from its clock when it closes. Closing an
+already-closed Stream leaves it as it was, so a Stream keeps the time of the
+first close. In the test notation a closed Stream's header reads as a
+timeline, `"Chores" open <created_at> closed <closed_at>`, so an open
+Stream's header is unchanged.
+
+- **Why:** an Application that cleans up closed Streams after a while, as
+  the Todo app does a week after closing "Chores", needs to know when each
+  one closed. Without the field it has to record that itself, in another
+  Stream, for something the Store already knows.
+- **Cost:** `status` and `closed_at` say the same thing twice — a Stream is
+  closed exactly when `closed_at` is set — and the Store has to keep the two
+  in step. A close now reads the clock, so it takes a time from every reading
+  after it, as an append does.
+- **Alternatives:** a `closed` status that carries the time
+  (`StreamStatus::Closed { closed_at }`), which makes a mismatch impossible to
+  write — not taken for now, since the nullable field matches the schema one
+  to one. No `closed_at`, leaving it to the Application — rejected for the
+  reason above. A header of the status and both times, which leaves the reader
+  guessing which time is which.

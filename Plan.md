@@ -279,10 +279,17 @@ values out of the snapshots afterwards.
   (`StreamNotFound` for a Stream that was never created), and `GetStream.02`
   (a closed Stream's record), held back from 7b because nothing could close a
   Stream until now.
+  At this checkpoint the Stream grew a `closed_at`, set from the Store's clock
+  when it closes and kept by a second close (DECISIONS.md 0020). A closed
+  Stream's header reads as a timeline, `"Chores" open <created_at> closed
+  <closed_at>`, so the open headers from step 7 don't change.
+  `close_stream` returns the Stream, as `create_stream` does, so the caller
+  sees the `closed_at` the close gave it.
   → **checkpoint.**
-- **9b (implementation):** implement `close_stream`, and replace the panic a
-  `closed` header hits in `given` (7c) with the `close_stream` call that
-  replays it.
+- **9b (implementation):** implement `close_stream` and `closed_at`, render
+  and parse the `closed <closed_at>` part of the header, and replace the panic
+  a closed header hits in `parse_store` (7c) with the `close_stream` call that
+  replays it, its time scripted after the Stream's Events.
 
 ### Step 10 — Enforce StreamClosed across Append/Read/Create
 
