@@ -337,16 +337,17 @@ it:
   `()`: once the Stream is gone there is nothing to hand back. An open Stream
   is checked before anything is removed.
 
-### Step 12 — Delete/Create interplay across Streams
+### Step 12 — Delete/Create interplay across Streams [DONE]
 
-- **12a (tests):** `DeleteStream.03` (deleting one Stream leaves an unrelated
-  Stream, e.g. a summary Stream, untouched), `CreateStream.04` (recreating a
-  previously-deleted id starts a fresh, empty Stream — delete doesn't retire
-  the id).
+- **12a (tests) [DONE]:** `CreateStream.04` (recreating a previously-deleted
+  id starts a fresh, empty Stream — delete doesn't retire the id).
+  `DeleteStream.03` (deleting one Stream leaves an unrelated Stream, e.g. a
+  summary Stream, untouched) was dropped at this checkpoint: no test needed.
+  A recreated Stream restarts its vector clock at 1, which replication will
+  have to revisit, perhaps with tombstones (DECISIONS.md 0023).
   → **checkpoint.**
-- **12b (implementation):** fix up anything `11b` didn't already cover (this
-  step should mostly just confirm existing behavior — a good sign if 12b ends
-  up empty).
+- **12b (implementation) [DONE]:** empty — `CreateStream.04` passed against
+  11b as written.
 
 ### Step 13 — End-to-end narrative test
 
@@ -382,6 +383,9 @@ feature-complete against SPECIFICATION.md. Next slices, not covered here:
 - Stream subscription (push/hooks) — builds on this.
 - Node replication, and the still-open questions in DECISIONS.md 0003/0006
   (vector clocks, concurrent writers to the same Stream at the same Node).
+  Stream deletion needs rethinking here: tombstones, so Nodes remember a
+  deleted Stream and a recreated id doesn't restart its vector clock
+  (DECISIONS.md 0023).
 - A public API protocol (JSON first; gRPC/Avro anticipated — see
   DECISIONS.md 0007). Today the only "API" is the Store's Rust function
   calls used directly by these tests. `AppendEvent.11`'s shape validation

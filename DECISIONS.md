@@ -532,4 +532,7 @@ deleting an already-deleted Stream succeeds.
   every delete, which works against deleting to reclaim space, and Create
   would have to clear it to recreate an id (CreateStream.04). Replication may
   need tombstones to carry deletes between Nodes; that is the place to
-  decide them, on what it needs.
+  decide them, on what it needs. It may also need them so a recreated id
+  does not restart its vector clock: today the first Event of a recreated
+  Stream gets `{node-a:1}`, the same clock as the deleted Stream's first
+  Event.
