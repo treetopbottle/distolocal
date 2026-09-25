@@ -244,9 +244,9 @@ values out of the snapshots afterwards.
   because a `Given` replays its Streams block by block where `store_with`
   created both up front.
 
-### Step 8 — Append Event: event_id uniqueness and opaque data
+### Step 8 — Append Event: event_id uniqueness and opaque data [DONE]
 
-- **8a (tests):** `AppendEvent.05` (a retry with the same `event_id` fails
+- **8a (tests) [DONE]:** `AppendEvent.05` (a retry with the same `event_id` fails
   with `EventIdConflict` carrying the stored Event, which is in the Stream
   once), `AppendEvent.10` (the same error when `event_id` is reused for a
   different Event), `AppendEvent.07` (locks in that `data` is opaque — no
@@ -260,8 +260,17 @@ values out of the snapshots afterwards.
   Event, so shape validation belongs to the API adapters and waits for the
   public API slice (DECISIONS.md 0018).
   → **checkpoint.**
-- **8b (implementation):** reject a reused `event_id` in `append_event`, and
-  give `EventIdConflict` the stored Event in place of its ids.
+  Landed as one test, `append_event_reusing_an_event_id`, for both ids: a
+  retry of the same Event is the stronger check — it fails on a Store that
+  never looks at ids (the Event shows twice) and on one that still compares
+  payloads (the retry succeeds) — so a second append of a different Event
+  added nothing.
+- **8b (implementation) [DONE]:** reject a reused `event_id` in
+  `append_event`, and give `EventIdConflict` the stored Event in place of its
+  ids — boxed, so an Event-sized error doesn't grow every `Result`. The check
+  runs before the clock is read, so a rejected append leaves no gap in the
+  times. `Error::InvalidEvent` came out with it: the Store no longer raises
+  it (DECISIONS.md 0018), and the adapters will bring their own.
 
 ### Step 9 — Close Stream
 

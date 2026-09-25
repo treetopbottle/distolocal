@@ -77,11 +77,20 @@ pub struct Stream {
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-    StreamNotFound { stream_id: String },
-    StreamClosed { stream_id: String },
-    StreamNotClosed { stream_id: String },
-    EventIdConflict { stream_id: String, event_id: String },
-    InvalidEvent { reason: String },
+    StreamNotFound {
+        stream_id: String,
+    },
+    StreamClosed {
+        stream_id: String,
+    },
+    StreamNotClosed {
+        stream_id: String,
+    },
+    /// The Event already stored under that `event_id`, boxed to keep
+    /// `Result<_, Error>` small.
+    EventIdConflict {
+        stored: Box<Event>,
+    },
 }
 
 pub struct Store {
@@ -154,9 +163,19 @@ impl Store {
     }
 
     /// Appends an Event to an existing Stream, marking it with this Node's next
-    /// count for that Stream.
+    /// count for that Stream. An `event_id` the Stream already holds is a
+    /// conflict, whatever the rest of the Event says.
     pub fn append_event(&mut self, stream_id: &str, event: PendingEvent) -> Result<Event, Error> {
         let (_, events) = Self::stream_mut(&mut self.streams, stream_id)?;
+
+        if let Some(stored) = events
+            .iter()
+            .find(|stored| stored.event_id == event.event_id)
+        {
+            return Err(Error::EventIdConflict {
+                stored: Box::new(stored.clone()),
+            });
+        }
 
         let mut vector_clock = events
             .last()
