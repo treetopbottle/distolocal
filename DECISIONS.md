@@ -540,3 +540,23 @@ deleting an already-deleted Stream succeeds.
   does not restart its vector clock: today the first Event of a recreated
   Stream gets `{node-a:1}`, the same clock as the deleted Stream's first
   Event.
+
+## 0024 — Retention: protecting a Stream from deletion
+
+Undecided · 2026-09-25 · Domain · relates to 0023
+
+Some Streams should never be deleted, e.g. a bank account's transaction
+history, while others are meant to be, e.g. keystrokes once their text is
+summarized. Today any closed Stream can be deleted, and keeping one is up to
+the Application. A retention policy in the Store may come later, but not in
+this slice.
+
+- **Why:** until there is a public API, only the Application's own code can
+  delete, so a Store-level guard would protect against very little. It
+  matters once other callers can reach a Node.
+- **Open options:** a policy set when the Stream is created and never
+  changed (so every Node agrees on it under replication), e.g. deletable or
+  permanent; or a retention period, e.g. N years after `closed_at`, since
+  "never" is often a legal minimum and privacy law can require erasure.
+  Decide it alongside tombstones (0023): a Stream that can't be deleted
+  never needs one.
