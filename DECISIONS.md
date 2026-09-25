@@ -504,3 +504,32 @@ and `set_next` sets what the next reading gives. What 0015 decided stands: a
   case above. A clock that is only ever set — the tests that make calls in a
   row would have to set it before each call. Keeping a separate
   `ScriptedClock` beside `SteppingClock` — two clocks for what is one.
+
+## 0023 — Deleting a Stream that doesn't exist is `StreamNotFound`
+
+Accepted · 2026-09-25 · Domain · relates to 0019
+
+Delete Stream on an id the Store doesn't hold fails with `StreamNotFound`,
+as Append, Read, Get and Close do. That includes a Stream already deleted:
+the Store keeps no record of a deleted Stream, so it can't tell one from an
+id that was never created. This replaces the spec's earlier rule that
+deleting an already-deleted Stream succeeds.
+
+- **Why:** that rule could only ever be "deleting any unknown id succeeds" —
+  a typo in an id included — because nothing distinguishes the deleted id.
+  Close can be idempotent and still report `StreamNotFound` only because a
+  closed Stream is still stored. The error says exactly what the Store
+  knows, keeps Delete in line with every other operation, and needs no
+  state.
+- **Cost:** a retried delete whose first reply was lost gets an error, not
+  a success. The Application treats `StreamNotFound` from a delete as the
+  Stream being gone, as it treats an `EventIdConflict` on a retried append
+  (0019).
+- **Alternatives:** succeed on any unknown id, the earlier rule — rejected
+  for the typo above, and for making Delete the one operation that accepts
+  an id nobody created. Remember deleted ids (tombstones), so a deleted id
+  succeeds and an unknown one fails — rejected for now: the record grows with
+  every delete, which works against deleting to reclaim space, and Create
+  would have to clear it to recreate an id (CreateStream.04). Replication may
+  need tombstones to carry deletes between Nodes; that is the place to
+  decide them, on what it needs.

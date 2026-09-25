@@ -41,7 +41,7 @@ Errors returned by the Store's Event and Stream management features.
 
 | Error | Raised when |
 |---|---|
-| `StreamNotFound` | Append, Read, Get, or Close is called on a Stream that was never created |
+| `StreamNotFound` | Append, Read, Get, or Close is called on a Stream that was never created, or Delete on a Stream that doesn't exist — never created or already deleted (see DeleteStream.04) |
 | `StreamClosed` | Append is called on a Stream that is closed, or Create is called on an id that belongs to a closed Stream |
 | `StreamNotClosed` | Delete is called on a Stream that is still open |
 | `EventIdConflict` | Append is called with an `event_id` already used in that Stream, whatever the new Event holds; the error carries the Event already stored (see AppendEvent.05 and .10) |
@@ -329,13 +329,15 @@ When the Todo app deletes the Stream "Chores"
 Then the Stream "Chores" no longer exists, but the Stream "ChoresHistory" is untouched and still contains: [ChoresSummarized]
 ```
 
-**Rule: idempotent — deleting a Stream that no longer exists succeeds with no error**
+**Rule: rejected with a `StreamNotFound` error if the target Stream doesn't exist — whether it was never created or already deleted, since the Store keeps no record of a deleted Stream to tell the two apart (see DECISIONS.md 0023)**
 
-**`DeleteStream.04`** Deleting an already-deleted Stream
+An Application retrying a delete whose reply it lost gets this error, and can treat it as the Stream being gone.
+
+**`DeleteStream.04`** Deleting a Stream that doesn't exist
 ```
-Given the Stream "Chores" was already deleted
-When the Todo app deletes the Stream "Chores" again
-Then it succeeds again with no error
+Given no Stream named "Groceries" exists
+When the Todo app deletes the Stream "Groceries"
+Then the delete fails with a StreamNotFound error
 ```
 
 #### Pattern: closing the books

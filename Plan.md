@@ -329,8 +329,9 @@ it:
 
 - **11a (tests):** `DeleteStream.01` (`StreamNotClosed` when deleting an open
   Stream), `DeleteStream.02` (deleting a closed Stream removes it and its
-  Events), `DeleteStream.04` (idempotent — deleting an already-deleted Stream
-  succeeds).
+  Events), `DeleteStream.04` (`StreamNotFound` when deleting a Stream that
+  doesn't exist, whether never created or already deleted — changed at this
+  checkpoint from "succeeds", DECISIONS.md 0023).
   → **checkpoint.**
 - **11b (implementation):** implement `delete_stream`.
 
