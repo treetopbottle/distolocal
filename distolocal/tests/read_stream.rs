@@ -1,6 +1,6 @@
 mod common;
 
-use common::{pprint_events, store, store_with, todo_created, todo_finished};
+use common::{parse_store, pprint_events, store, store_with, todo_created, todo_finished};
 use distolocal::Error;
 use insta::assert_snapshot;
 
@@ -45,6 +45,40 @@ fn read_stream_with_events() {
     let events = store
         .get_events("Chores")
         .expect("reading an existing Stream should succeed");
+
+    assert_snapshot!(pprint_events(events), @r#"
+    2026-01-01T00:00:01Z TodoCreated {node-a:1}
+      data {"todo_id":1,"title":"Take out the trash"}
+      metadata {}
+    2026-01-01T00:00:02Z TodoCreated {node-a:2}
+      data {"todo_id":2,"title":"Wash the dishes"}
+      metadata {}
+    2026-01-01T00:00:03Z TodoFinished {node-a:3}
+      data {"todo_id":1}
+      metadata {}
+    "#);
+}
+
+#[test]
+fn read_stream_that_is_closed() {
+    let store = parse_store(
+        r#"
+        "Chores" open 2026-01-01T00:00:00Z closed 2026-01-01T00:00:04Z
+          2026-01-01T00:00:01Z TodoCreated {node-a:1}
+            data {"todo_id":1,"title":"Take out the trash"}
+            metadata {}
+          2026-01-01T00:00:02Z TodoCreated {node-a:2}
+            data {"todo_id":2,"title":"Wash the dishes"}
+            metadata {}
+          2026-01-01T00:00:03Z TodoFinished {node-a:3}
+            data {"todo_id":1}
+            metadata {}
+        "#,
+    );
+
+    let events = store
+        .get_events("Chores")
+        .expect("reading a closed Stream should succeed");
 
     assert_snapshot!(pprint_events(events), @r#"
     2026-01-01T00:00:01Z TodoCreated {node-a:1}

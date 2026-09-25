@@ -1,6 +1,7 @@
 mod common;
 
 use common::{parse_store, pprint_store, store};
+use distolocal::Error;
 use insta::assert_snapshot;
 
 #[test]
@@ -32,4 +33,23 @@ fn create_stream() {
         .expect("creating a new Stream should succeed");
 
     assert_snapshot!(pprint_store(&store), @r#""Lists" open 2026-01-01T00:00:00Z"#);
+}
+
+#[test]
+fn create_stream_that_is_closed() {
+    let mut store = parse_store(
+        r#"
+        "Chores" open 2026-01-01T00:00:00Z closed 2026-01-01T00:00:01Z
+        "#,
+    );
+
+    let result = store.create_stream("Chores");
+
+    assert_eq!(
+        result,
+        Err(Error::StreamClosed {
+            stream_id: "Chores".to_string()
+        })
+    );
+    assert_snapshot!(pprint_store(&store), @r#""Chores" open 2026-01-01T00:00:00Z closed 2026-01-01T00:00:01Z"#);
 }

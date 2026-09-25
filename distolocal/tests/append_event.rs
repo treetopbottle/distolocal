@@ -174,3 +174,36 @@ fn append_event_referencing_a_todo_that_does_not_exist() {
         metadata {}
     "#);
 }
+
+#[test]
+fn append_event_to_closed_stream() {
+    let mut store = parse_store(
+        r#"
+        "Chores" open 2026-01-01T00:00:00Z closed 2026-01-01T00:00:03Z
+          2026-01-01T00:00:01Z TodoCreated {node-a:1}
+            data {"todo_id":1,"title":"Take out the trash"}
+            metadata {}
+          2026-01-01T00:00:02Z TodoCreated {node-a:2}
+            data {"todo_id":2,"title":"Wash the dishes"}
+            metadata {}
+        "#,
+    );
+
+    let result = store.append_event("Chores", todo_created(3, "Water the plants"));
+
+    assert_eq!(
+        result,
+        Err(Error::StreamClosed {
+            stream_id: "Chores".to_string()
+        })
+    );
+    assert_snapshot!(pprint_store(&store), @r#"
+    "Chores" open 2026-01-01T00:00:00Z closed 2026-01-01T00:00:03Z
+      2026-01-01T00:00:01Z TodoCreated {node-a:1}
+        data {"todo_id":1,"title":"Take out the trash"}
+        metadata {}
+      2026-01-01T00:00:02Z TodoCreated {node-a:2}
+        data {"todo_id":2,"title":"Wash the dishes"}
+        metadata {}
+    "#);
+}
