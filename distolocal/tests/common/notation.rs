@@ -17,51 +17,15 @@
 //! `metadata {}` means no metadata, and a hand-written text may leave the line
 //! out. Payloads are one line of text each.
 
-use super::{NODE_ID, START, STEP, next_event_id};
-use distolocal::{Clock, Event, PendingEvent, Store, Stream, StreamStatus};
-use std::cell::Cell;
+use super::{NODE_ID, SteppingClock, next_event_id};
+use distolocal::{Event, PendingEvent, Store, Stream, StreamStatus};
 use std::collections::HashMap;
 use std::iter;
 use std::str;
+use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
-use time::{Duration, OffsetDateTime};
 
 const NO_METADATA: &str = "{}";
-
-/// A clock that reads out `script` in order, then carries on stepping `step`
-/// from where the script left off.
-struct ScriptedClock {
-    script: Vec<OffsetDateTime>,
-    readings: Cell<usize>,
-    next: Cell<OffsetDateTime>,
-    step: Duration,
-}
-
-impl ScriptedClock {
-    fn new(script: Vec<OffsetDateTime>, step: Duration) -> Self {
-        ScriptedClock {
-            script,
-            readings: Cell::new(0),
-            next: Cell::new(START),
-            step,
-        }
-    }
-}
-
-impl Clock for ScriptedClock {
-    fn now(&self) -> OffsetDateTime {
-        let readings = self.readings.get();
-        let now = self
-            .script
-            .get(readings)
-            .copied()
-            .unwrap_or_else(|| self.next.get());
-
-        self.readings.set(readings + 1);
-        self.next.set(now + self.step);
-        now
-    }
-}
 
 /// Pretty print a Store. Print every Stream for a Store and every Event in a Stream.
 pub fn pprint_store(store: &Store) -> String {
@@ -109,22 +73,14 @@ pub fn pprint_events(events: &[Event]) -> String {
 }
 
 /// A Store holding the Streams the text describes, replayed through
-/// `create_stream`/`append_event`/`close_stream`. The times in the text drive the Store's
-/// clock, which keeps stepping after the text ends.
+/// `create_stream`/`append_event`/`close_stream`. The clock is set to each
+/// time in the text just before the call that records it, and keeps stepping
+/// after the text ends.
 pub fn parse_store(text: &str) -> Store {
-    let streams = parse(text);
-    let script = streams
-        .iter()
-        .flat_map(|stream| {
-            iter::once(stream.created_at)
-                .chain(stream.events.iter().map(|event| event.created_at))
-                .chain(stream.closed_at)
-        })
-        .collect();
-
-    let mut store = Store::new(NODE_ID, ScriptedClock::new(script, STEP));
-    for stream in &streams {
-        replay(&mut store, stream);
+    let clock = SteppingClock::default();
+    let mut store = Store::new(NODE_ID, clock.clone());
+    for stream in &parse(text) {
+        replay(&mut store, &clock, stream);
     }
 
     store
@@ -177,19 +133,21 @@ fn pprint_data(field: &str, data: &[u8]) -> String {
     format!("    {field} {payload}")
 }
 
-fn replay(store: &mut Store, stream: &ParsedStream) {
-    // `create_stream` returns an existing Stream without reading the clock,
-    // which would leave that block's time in the script for the next reading.
+fn replay(store: &mut Store, clock: &SteppingClock, stream: &ParsedStream) {
+    // `create_stream` would hand back the first block's Stream, and this
+    // block's Events would land in it.
     assert!(
         store.get_stream(&stream.stream_id).is_err(),
         "parse_store: the Stream {:?} appears twice",
         stream.stream_id
     );
+    clock.set_next(stream.created_at);
     store
         .create_stream(&stream.stream_id)
         .expect("creating a new Stream should succeed");
 
     for event in &stream.events {
+        clock.set_next(event.created_at);
         let appended = store
             .append_event(
                 &stream.stream_id,
@@ -209,7 +167,8 @@ fn replay(store: &mut Store, stream: &ParsedStream) {
         );
     }
 
-    if stream.closed_at.is_some() {
+    if let Some(closed_at) = stream.closed_at {
+        clock.set_next(closed_at);
         store
             .close_stream(&stream.stream_id)
             .expect("closing an open Stream should succeed");

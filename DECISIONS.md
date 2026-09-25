@@ -280,7 +280,8 @@ this thing, read from its own clock.
 
 ## 0015 — A `Given`'s times drive the Store's clock
 
-Accepted · 2026-09-21 · Technical · relates to 0011, 0012
+Accepted · 2026-09-21 · Technical · relates to 0011, 0012 · its mechanism
+superseded by 0022
 
 `given(text)` builds the Store with a clock that reads out the times the text
 names, in order, and then carries on stepping from the last one. The vector
@@ -472,3 +473,34 @@ and a nullable `closed_at` as two fields.
   `closed_at` (an `is_closed()` method), which also removes the mismatch but
   leaves the status the spec talks about as a derived idea, and a further
   state as another nullable field.
+
+## 0022 — A `Given` sets the clock to each of its times
+
+Accepted · 2026-09-25 · Technical · supersedes 0015's mechanism · relates to 0012
+
+`parse_store` sets the test clock to each time in the text just before the
+call that records it, and after the text ends the clock steps on from the
+last one. One test clock, `SteppingClock`, does both: it steps per reading,
+and `set_next` sets what the next reading gives. What 0015 decided stands: a
+`Given`'s times are inputs, and its vector clocks are checked.
+
+- **Why:** 0015's clock read out the times as a script, one per reading, so a
+  `Given` only replayed right if every call read the clock exactly as often
+  as it recorded a time. That made the number of readings — whether a refused
+  or a repeated call reads the clock — something the tests pinned down and
+  the docs kept restating, though the Store promises nothing about it; only
+  the times it records are behavior. Setting the time before each call makes
+  what earlier calls read irrelevant.
+- **Cost:** a call that read the clock more than once before recording would
+  still use up the time set for it. With the real clock that call would mix
+  two moments, so it is not a case to design for. A test that steps through
+  calls made in a row, on `store()` or `store_with`, still counts on each of
+  them reading the clock once; that is the stepping those tests show, and a
+  `Given` is the way to write times down instead. Replaying needs a handle on
+  the clock the Store holds, so the clock keeps its time behind an `Rc`.
+- **Alternatives:** freezing the clock at each time, so any number of
+  readings gives it, then resuming stepping after the text — tried, and
+  dropped: a two-state clock and a resume call to cover only the multi-read
+  case above. A clock that is only ever set — the tests that make calls in a
+  row would have to set it before each call. Keeping a separate
+  `ScriptedClock` beside `SteppingClock` — two clocks for what is one.

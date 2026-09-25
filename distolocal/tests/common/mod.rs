@@ -9,6 +9,7 @@ pub use notation::{parse_store, pprint_events, pprint_store, pprint_stream};
 
 use distolocal::{Clock, PendingEvent, Store};
 use std::cell::Cell;
+use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use time::macros::datetime;
 use time::{Duration, OffsetDateTime};
@@ -22,15 +23,24 @@ pub const START: OffsetDateTime = datetime!(2026-01-01 00:00:00 UTC);
 pub const STEP: Duration = Duration::seconds(1);
 
 /// A clock that reads `START` first and advances `STEP` per reading, so every
-/// time the Store records in a test is distinct and in call order.
+/// time the Store records in a test is distinct and in call order. Clones
+/// share one time, so a test can `set_next` the clock it gave the Store.
+#[derive(Clone)]
 pub struct SteppingClock {
-    next: Cell<OffsetDateTime>,
+    next: Rc<Cell<OffsetDateTime>>,
+}
+
+impl SteppingClock {
+    /// The next reading gives `time`; stepping carries on from there.
+    pub fn set_next(&self, time: OffsetDateTime) {
+        self.next.set(time);
+    }
 }
 
 impl Default for SteppingClock {
     fn default() -> Self {
         SteppingClock {
-            next: Cell::new(START),
+            next: Rc::new(Cell::new(START)),
         }
     }
 }

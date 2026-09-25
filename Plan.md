@@ -315,6 +315,15 @@ it:
   answers whatever the status (7b), which is how an Application asks whether
   a Stream is still open. Both go through one `ensure_open`. An append to a
   closed Stream fails with `StreamClosed` before its `event_id` is checked.
+- **10c (harness refactor) [DONE]:** stop a `Given` depending on how many
+  times an operation reads the clock — the Store makes no promise about
+  that, only about the times it records. `parse_store` sets the test clock
+  to each time in the text just before the call that records it, instead of
+  reading out a script one entry per reading, and the clock steps on from
+  the last one after the text ends. `ScriptedClock` goes; `SteppingClock`
+  gains `set_next`. A freezing clock was tried and dropped as more than this
+  needs (DECISIONS.md 0022). No new tests: the notation and clock tests cover
+  both.
 
 ### Step 11 — Delete Stream
 
