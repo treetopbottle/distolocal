@@ -134,9 +134,21 @@ impl Store {
         }
     }
 
-    /// Creates the Stream, or returns it unchanged if it already exists.
+    // Every operation that a closed Stream refuses checks here first.
+    fn ensure_open(stream: &Stream) -> Result<(), Error> {
+        match stream.status {
+            StreamStatus::Open => Ok(()),
+            StreamStatus::Closed { .. } => Err(Error::StreamClosed {
+                stream_id: stream.stream_id.clone(),
+            }),
+        }
+    }
+
+    /// Creates the Stream, or returns it unchanged if it already exists and
+    /// is open. A closed Stream's id is not a way to reopen it.
     pub fn create_stream(&mut self, stream_id: &str) -> Result<Stream, Error> {
         if let Some((stream, _)) = self.streams.get(stream_id) {
+            Self::ensure_open(stream)?;
             return Ok(stream.clone());
         }
 
@@ -177,11 +189,12 @@ impl Store {
         Ok(stream.clone())
     }
 
-    /// Appends an Event to an existing Stream, marking it with this Node's next
-    /// count for that Stream. An `event_id` the Stream already holds is a
-    /// conflict, whatever the rest of the Event says.
+    /// Appends an Event to an existing, open Stream, marking it with this
+    /// Node's next count for that Stream. An `event_id` the Stream already
+    /// holds is a conflict, whatever the rest of the Event says.
     pub fn append_event(&mut self, stream_id: &str, event: PendingEvent) -> Result<Event, Error> {
-        let (_, events) = Self::stream_mut(&mut self.streams, stream_id)?;
+        let (stream, events) = Self::stream_mut(&mut self.streams, stream_id)?;
+        Self::ensure_open(stream)?;
 
         if let Some(stored) = events
             .iter()

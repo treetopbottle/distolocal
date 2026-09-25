@@ -297,20 +297,24 @@ values out of the snapshots afterwards.
   Afterwards `closed_at` moved into `StreamStatus::Closed` (DECISIONS.md
   0021), which made that mismatch impossible and the panic unneeded.
 
-### Step 10 — Enforce StreamClosed across Append/Read/Create
+### Step 10 — Enforce StreamClosed across Append/Read/Create [DONE]
 
 Now that Close Stream exists, wire up the closed-Stream rules that depend on
 it:
 
-- **10a (tests):** `AppendEvent.06` (`StreamClosed` on append to a closed
+- **10a (tests) [DONE]:** `AppendEvent.06` (`StreamClosed` on append to a closed
   Stream), `ReadStream.03` (reading a closed Stream still returns its Events),
   `CreateStream.03` (`StreamClosed` when Create targets an id whose Stream is
   closed — Create is not a way to reopen).
+  `ReadStream.03` passed before 10b: it guards against a closed check
+  creeping into reads.
   → **checkpoint.**
-- **10b (implementation):** add the closed-Stream checks to
-  `append_event`/`read_stream`/`create_stream` — and to nothing else:
-  `get_stream` answers whatever the status (7b), which is how an Application
-  asks whether a Stream is still open.
+- **10b (implementation) [DONE]:** add the closed-Stream check to
+  `append_event` and `create_stream` — and to nothing else: `get_events`
+  still returns a closed Stream's Events (`ReadStream.03`), and `get_stream`
+  answers whatever the status (7b), which is how an Application asks whether
+  a Stream is still open. Both go through one `ensure_open`. An append to a
+  closed Stream fails with `StreamClosed` before its `event_id` is checked.
 
 ### Step 11 — Delete Stream
 
