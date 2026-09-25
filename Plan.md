@@ -244,16 +244,24 @@ values out of the snapshots afterwards.
   because a `Given` replays its Streams block by block where `store_with`
   created both up front.
 
-### Step 8 — Append Event: idempotency and validation
+### Step 8 — Append Event: event_id uniqueness and opaque data
 
-- **8a (tests):** `AppendEvent.05` (retry with the same `event_id` appends
-  once), `AppendEvent.10` (`EventIdConflict` when `event_id` is reused with
-  different data), `AppendEvent.11` (`InvalidEvent` when a required field is
-  missing), `AppendEvent.07` (locks in that `data` is opaque — no app-level
-  validation).
+- **8a (tests):** `AppendEvent.05` (a retry with the same `event_id` fails
+  with `EventIdConflict` carrying the stored Event, which is in the Stream
+  once), `AppendEvent.10` (the same error when `event_id` is reused for a
+  different Event), `AppendEvent.07` (locks in that `data` is opaque — no
+  app-level validation).
+  The two `event_id` rules became one at this checkpoint: the Store checks
+  that an `event_id` is unique in its Stream and compares nothing else, and
+  the Application gets idempotency from the stored Event the error carries
+  (DECISIONS.md 0019).
+  `AppendEvent.11` (`InvalidEvent` when a required field is missing) moved
+  out at this checkpoint: the Store's typed API cannot receive a malformed
+  Event, so shape validation belongs to the API adapters and waits for the
+  public API slice (DECISIONS.md 0018).
   → **checkpoint.**
-- **8b (implementation):** add idempotency-by-`event_id` and shape validation
-  to `append_event`.
+- **8b (implementation):** reject a reused `event_id` in `append_event`, and
+  give `EventIdConflict` the stored Event in place of its ids.
 
 ### Step 9 — Close Stream
 
@@ -338,6 +346,7 @@ feature-complete against SPECIFICATION.md. Next slices, not covered here:
   (vector clocks, concurrent writers to the same Stream at the same Node).
 - A public API protocol (JSON first; gRPC/Avro anticipated — see
   DECISIONS.md 0007). Today the only "API" is the Store's Rust function
-  calls used directly by these tests.
+  calls used directly by these tests. `AppendEvent.11`'s shape validation
+  lands here, in the adapters (DECISIONS.md 0018).
 
 Don't start those until this slice is reviewed and merged.

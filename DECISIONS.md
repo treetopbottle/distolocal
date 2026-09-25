@@ -367,3 +367,56 @@ behavior, not one per corner case.
 - **Alternatives:** 0009's comments, kept or cut down to a bare
   `// AppendEvent.04` id line. 0009 already names the `World` DSL and
   `cucumber` as the heavier options.
+
+## 0018 — Event shape is validated by the API adapters, not the Store
+
+Accepted · 2026-09-25 · Technical · relates to 0007
+
+`InvalidEvent` — an Event missing a required field, or holding one of the
+wrong type or format — is raised by the API adapter (HTTP, gRPC, …) that
+decodes the request, before anything reaches the Store. The Store's own API
+takes a typed `PendingEvent`, and does not check its shape again.
+
+- **Why:** a missing field or a wrongly typed one only exists in untyped
+  input. Through the Rust API every field is present and typed, so the Store
+  would be checking what the compiler already guarantees. Testing it there
+  meant inventing a stand-in — an empty `event_type` for "no `type` field" —
+  and a stand-in is a rule of its own, not the one AppendEvent.11 states.
+  Each adapter already has to decode its protocol's encoding (0007), so it is
+  where a malformed request is first seen.
+- **Cost:** every adapter must validate shape itself, with no shared check in
+  the core to fall back on. `AppendEvent.11` has no test until the public API
+  slice, and the Store accepts an empty `event_type` or `event_id` as given.
+- **Alternatives:** the Store rejecting empty strings as "missing" — rejected
+  as the stand-in above. Optional fields on `PendingEvent`, so a missing one
+  is expressible — rejected as making every caller of the typed API handle a
+  case only wire input can produce.
+
+## 0019 — The Store checks `event_id` uniqueness, not Event equality
+
+Accepted · 2026-09-25 · Technical · relates to 0007
+
+An Append whose `event_id` is already used in the target Stream fails with
+`EventIdConflict`, whatever the new Event holds. The error carries the Event
+already stored. The Store compares `event_id`s and nothing else, so a retry
+of an append that landed and an id reused for a different Event get the same
+answer; telling them apart is the Application's job, from the stored Event.
+An HTTP adapter maps the error to 409 Conflict.
+
+- **Why:** deciding that two Events are "the same" is harder than it looks.
+  `data` and `metadata` are opaque bytes (0007), and a client that re-encodes
+  JSON on a retry can change key order, turning a genuine retry into a
+  conflict. The Application can decode its own payloads; the Store cannot.
+  The uniqueness check stays in the Store, though: without it a retry appends
+  a duplicate, and the Application's only defence would be reading the Stream
+  before every append.
+- **Cost:** idempotency is no longer free — every Application has to handle
+  `EventIdConflict` on a retry and treat it as success. The error grows from
+  two ids to a whole Event.
+- **Alternatives:** the Store comparing the rest of the Event and succeeding
+  on an exact retry — the spec's original rule, rejected for the encoding
+  problem above. No `event_id` check in the Store at all, leaving it to the
+  Application or to Node replication — rejected because an interrupted write
+  is between an Application and its own Node, which replication never sees.
+  Replication will need its own dedup by `event_id`, and can build on this
+  check.
