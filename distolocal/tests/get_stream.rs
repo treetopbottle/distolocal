@@ -31,3 +31,17 @@ fn get_stream_that_is_open() {
 
     assert_snapshot!(pprint_stream(stream), @r#""Chores" open 2026-01-01T00:00:00Z"#);
 }
+
+#[test]
+fn get_stream_that_is_closed() {
+    let mut store = store_with(&["Chores"]);
+    store
+        .close_stream("Chores")
+        .expect("closing an open Stream should succeed");
+
+    let stream = store
+        .get_stream("Chores")
+        .expect("getting a closed Stream should succeed");
+
+    assert_snapshot!(pprint_stream(stream), @r#""Chores" open 2026-01-01T00:00:00Z closed 2026-01-01T00:00:01Z"#);
+}
