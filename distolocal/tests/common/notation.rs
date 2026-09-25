@@ -93,13 +93,9 @@ pub fn pprint_store(store: &Store) -> String {
 pub fn pprint_stream(stream: &Stream) -> String {
     let header = format!("\"{}\" open {}", stream.stream_id, stream.created_at);
 
-    match (&stream.status, &stream.closed_at) {
-        (StreamStatus::Open, None) => header,
-        (StreamStatus::Closed, Some(closed_at)) => format!("{header} closed {closed_at}"),
-        _ => panic!(
-            "pprint_stream: the status and closed_at of {:?} disagree",
-            stream.stream_id
-        ),
+    match &stream.status {
+        StreamStatus::Open => header,
+        StreamStatus::Closed { closed_at } => format!("{header} closed {closed_at}"),
     }
 }
 

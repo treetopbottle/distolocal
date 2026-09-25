@@ -65,7 +65,10 @@ pub struct PendingEvent {
 #[derive(Debug, Clone, PartialEq)]
 pub enum StreamStatus {
     Open,
-    Closed,
+    /// `closed_at` is when the Store closed the Stream, read from its clock.
+    Closed {
+        closed_at: FormattedDateTime,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -73,9 +76,6 @@ pub struct Stream {
     pub stream_id: String,
     pub status: StreamStatus,
     pub created_at: FormattedDateTime,
-    /// When the Store closed this Stream, read from its clock; `None` while
-    /// it is open.
-    pub closed_at: Option<FormattedDateTime>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -144,7 +144,6 @@ impl Store {
             stream_id: stream_id.to_string(),
             status: StreamStatus::Open,
             created_at: self.clock.now().into(),
-            closed_at: None,
         };
         self.streams
             .insert(stream_id.to_string(), (stream.clone(), Vec::new()));
@@ -171,8 +170,9 @@ impl Store {
         let (stream, _) = Self::stream_mut(&mut self.streams, stream_id)?;
 
         if stream.status == StreamStatus::Open {
-            stream.status = StreamStatus::Closed;
-            stream.closed_at = Some(self.clock.now().into());
+            stream.status = StreamStatus::Closed {
+                closed_at: self.clock.now().into(),
+            };
         }
         Ok(stream.clone())
     }

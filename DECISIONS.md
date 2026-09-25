@@ -424,7 +424,8 @@ An HTTP adapter maps the error to 409 Conflict.
 
 ## 0020 — A Stream records when it was closed
 
-Accepted · 2026-09-25 · Technical · relates to 0012, 0015
+Accepted · 2026-09-25 · Technical · relates to 0012, 0015 · its representation
+superseded by 0021
 
 A Stream carries `closed_at`, the time Close Stream closed it: `null` while
 it is open, and set by the Store from its clock when it closes. Closing an
@@ -447,3 +448,27 @@ Stream's header is unchanged.
   to one. No `closed_at`, leaving it to the Application — rejected for the
   reason above. A header of the status and both times, which leaves the reader
   guessing which time is which.
+
+## 0021 — A closed status carries its `closed_at`
+
+Accepted · 2026-09-25 · Technical · supersedes 0020's representation
+
+`closed_at` moves from a field of `Stream` into its status:
+`StreamStatus::Closed { closed_at }`, beside a bare `StreamStatus::Open`. What
+0020 decided about the time stands — set from the Store's clock by the first
+close, kept by any later one — and SPECIFICATION.md's schema keeps `status`
+and a nullable `closed_at` as two fields.
+
+- **Why:** with a separate `closed_at`, `status` and `closed_at` said the same
+  thing twice, and the Store had to keep them in step; the test notation
+  needed a panic for a Stream where they disagreed. Carrying the time in the
+  status makes that mismatch impossible to write. The one-to-one match with
+  the schema that 0020 kept the field for bought nothing: nothing serializes a
+  `Stream` yet.
+- **Cost:** the Rust type no longer mirrors the schema, so whatever
+  serializes a Stream has to split the status into the two schema fields.
+  Reading the time means matching on the status rather than reading a field.
+- **Alternatives:** keep 0020's two fields. Drop `status` and derive it from
+  `closed_at` (an `is_closed()` method), which also removes the mismatch but
+  leaves the status the spec talks about as a derived idea, and a further
+  state as another nullable field.

@@ -294,6 +294,8 @@ values out of the snapshots afterwards.
   clock. `pprint_stream` panics on a Stream whose `status` and `closed_at`
   disagree, so the one mismatch DECISIONS.md 0020 accepts cannot slip past a
   snapshot.
+  Afterwards `closed_at` moved into `StreamStatus::Closed` (DECISIONS.md
+  0021), which made that mismatch impossible and the panic unneeded.
 
 ### Step 10 — Enforce StreamClosed across Append/Read/Create
 
