@@ -355,6 +355,10 @@ written in the notation (0010, 0011) through `parse_store` and
 in SPECIFICATION.md. Tests of the test harness stay general: one test per
 behavior, not one per corner case.
 
+One exception: the end-to-end narrative test (`tests/narrative.rs`) is
+living documentation of the spec's narrative, so its comments retell that
+story, one per part, above the calls that act it out.
+
 - **Why:** since 0011 a test's `Given` and `Then` are text the Store checks,
   so the comments repeated what the code already showed — and could drift
   from it, the gap 0009 accepted. Comments that name a Plan.md step or a

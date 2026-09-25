@@ -349,17 +349,21 @@ it:
 - **12b (implementation) [DONE]:** empty — `CreateStream.04` passed against
   11b as written.
 
-### Step 13 — End-to-end narrative test
+### Step 13 — End-to-end narrative test [DONE]
 
-- **13a (tests):** one integration test walking through the full "Annabel and
+- **13a (tests) [DONE]:** one integration test walking through the full "Annabel and
   the Todo Application" narrative from SPECIFICATION.md (Lists → Chores →
   ChoresHistory), written against the public Store API only, as living
   documentation. With the step 7 harness in place this reads as a dump after
   each beat of the narrative rather than a wall of assertions.
   → **checkpoint.**
-- **13b:** this test should already pass against steps 1–12's implementation
-  — if it doesn't, that's a sign a rule was missed earlier, not a new
-  feature to build.
+  Landed as `annabel_and_the_todo_application` in `tests/narrative.rs`. At
+  this checkpoint it gained a comment per beat retelling the narrative — the
+  one exception to DECISIONS.md 0017 — and its own clock, jumped two days
+  ahead for "a while later" so finishing the list shows in the dumps. The
+  week before the delete doesn't show: a delete records no time.
+- **13b [DONE]:** empty — the test passed against steps 1–12's
+  implementation as written.
 
 ### Step 14: Double check specification rules
 
