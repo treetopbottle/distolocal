@@ -73,6 +73,9 @@ pub struct Stream {
     pub stream_id: String,
     pub status: StreamStatus,
     pub created_at: FormattedDateTime,
+    /// When the Store closed this Stream, read from its clock; `None` while
+    /// it is open.
+    pub closed_at: Option<FormattedDateTime>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -141,6 +144,7 @@ impl Store {
             stream_id: stream_id.to_string(),
             status: StreamStatus::Open,
             created_at: self.clock.now().into(),
+            closed_at: None,
         };
         self.streams
             .insert(stream_id.to_string(), (stream.clone(), Vec::new()));
@@ -160,6 +164,17 @@ impl Store {
         let (_, events) = self.stream(stream_id)?;
 
         Ok(events)
+    }
+
+    /// Closes the Stream, or returns it unchanged if it is already closed.
+    pub fn close_stream(&mut self, stream_id: &str) -> Result<Stream, Error> {
+        let (stream, _) = Self::stream_mut(&mut self.streams, stream_id)?;
+
+        if stream.status == StreamStatus::Open {
+            stream.status = StreamStatus::Closed;
+            stream.closed_at = Some(self.clock.now().into());
+        }
+        Ok(stream.clone())
     }
 
     /// Appends an Event to an existing Stream, marking it with this Node's next

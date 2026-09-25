@@ -11,6 +11,9 @@
 //!     metadata {"schema_version":"1.7.2"}
 //! ```
 //!
+//! A closed Stream's header goes on with the time it closed:
+//! `"chores-3f2a1c" open 2026-01-01T00:00:02Z closed 2026-01-01T00:00:05Z`.
+//!
 //! `metadata {}` means no metadata, and a hand-written text may leave the line
 //! out. Payloads are one line of text each.
 
@@ -88,12 +91,16 @@ pub fn pprint_store(store: &Store) -> String {
 
 /// Pretty print a Stream's record: its header line in `pprint_store`.
 pub fn pprint_stream(stream: &Stream) -> String {
-    format!(
-        "\"{}\" {} {}",
-        stream.stream_id,
-        pprint_status(&stream.status),
-        stream.created_at
-    )
+    let header = format!("\"{}\" open {}", stream.stream_id, stream.created_at);
+
+    match (&stream.status, &stream.closed_at) {
+        (StreamStatus::Open, None) => header,
+        (StreamStatus::Closed, Some(closed_at)) => format!("{header} closed {closed_at}"),
+        _ => panic!(
+            "pprint_stream: the status and closed_at of {:?} disagree",
+            stream.stream_id
+        ),
+    }
 }
 
 /// Pretty print Events as they sit under their Stream's header in `pprint_store`.
@@ -106,14 +113,16 @@ pub fn pprint_events(events: &[Event]) -> String {
 }
 
 /// A Store holding the Streams the text describes, replayed through
-/// `create_stream`/`append_event`. The times in the text drive the Store's
+/// `create_stream`/`append_event`/`close_stream`. The times in the text drive the Store's
 /// clock, which keeps stepping after the text ends.
 pub fn parse_store(text: &str) -> Store {
     let streams = parse(text);
     let script = streams
         .iter()
         .flat_map(|stream| {
-            iter::once(stream.created_at).chain(stream.events.iter().map(|event| event.created_at))
+            iter::once(stream.created_at)
+                .chain(stream.events.iter().map(|event| event.created_at))
+                .chain(stream.closed_at)
         })
         .collect();
 
@@ -134,13 +143,6 @@ fn pprint_stream_with_events(store: &Store, stream: &Stream) -> String {
         .chain(events.iter().map(pprint_event))
         .collect::<Vec<_>>()
         .join("\n")
-}
-
-fn pprint_status(status: &StreamStatus) -> &'static str {
-    match status {
-        StreamStatus::Open => "open",
-        StreamStatus::Closed => "closed",
-    }
 }
 
 fn pprint_event(event: &Event) -> String {
@@ -211,15 +213,17 @@ fn replay(store: &mut Store, stream: &ParsedStream) {
         );
     }
 
-    if stream.status == StreamStatus::Closed {
-        panic!("parse_store: describing a closed Stream needs Close Stream");
+    if stream.closed_at.is_some() {
+        store
+            .close_stream(&stream.stream_id)
+            .expect("closing an open Stream should succeed");
     }
 }
 
 struct ParsedStream {
     stream_id: String,
-    status: StreamStatus,
     created_at: OffsetDateTime,
+    closed_at: Option<OffsetDateTime>,
     events: Vec<ParsedEvent>,
 }
 
@@ -274,18 +278,17 @@ fn parse_stream(line: &str) -> ParsedStream {
         .and_then(|rest| rest.split_once('"'))
         .unwrap_or_else(|| invalid(line));
 
-    let mut fields = rest.split_whitespace();
-    let status = match fields.next() {
-        Some("open") => StreamStatus::Open,
-        Some("closed") => StreamStatus::Closed,
+    let fields: Vec<_> = rest.split_whitespace().collect();
+    let (created_at, closed_at) = match fields[..] {
+        ["open", created_at] => (created_at, None),
+        ["open", created_at, "closed", closed_at] => (created_at, Some(parse_time(closed_at))),
         _ => invalid(line),
     };
-    let created_at = fields.next().unwrap_or_else(|| invalid(line));
 
     ParsedStream {
         stream_id: stream_id.to_string(),
-        status,
         created_at: parse_time(created_at),
+        closed_at,
         events: Vec::new(),
     }
 }

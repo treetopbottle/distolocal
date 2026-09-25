@@ -272,9 +272,9 @@ values out of the snapshots afterwards.
   times. `Error::InvalidEvent` came out with it: the Store no longer raises
   it (DECISIONS.md 0018), and the adapters will bring their own.
 
-### Step 9 — Close Stream
+### Step 9 — Close Stream [DONE]
 
-- **9a (tests):** `CloseStream.01` (closing an already-closed Stream is a
+- **9a (tests) [DONE]:** `CloseStream.01` (closing an already-closed Stream is a
   no-op), `CloseStream.02` (open → closed, Events unchanged), `CloseStream.03`
   (`StreamNotFound` for a Stream that was never created), and `GetStream.02`
   (a closed Stream's record), held back from 7b because nothing could close a
@@ -286,10 +286,14 @@ values out of the snapshots afterwards.
   `close_stream` returns the Stream, as `create_stream` does, so the caller
   sees the `closed_at` the close gave it.
   → **checkpoint.**
-- **9b (implementation):** implement `close_stream` and `closed_at`, render
-  and parse the `closed <closed_at>` part of the header, and replace the panic
-  a closed header hits in `parse_store` (7c) with the `close_stream` call that
-  replays it, its time scripted after the Stream's Events.
+- **9b (implementation) [DONE]:** implement `close_stream` and `closed_at`,
+  render and parse the `closed <closed_at>` part of the header, and replace
+  the panic a closed header hits in `parse_store` (7c) with the `close_stream`
+  call that replays it, its time scripted after the Stream's Events.
+  Like `create_stream`, a close that finds the Stream already closed reads no
+  clock. `pprint_stream` panics on a Stream whose `status` and `closed_at`
+  disagree, so the one mismatch DECISIONS.md 0020 accepts cannot slip past a
+  snapshot.
 
 ### Step 10 — Enforce StreamClosed across Append/Read/Create
 
