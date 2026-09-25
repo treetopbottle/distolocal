@@ -86,6 +86,13 @@ pub fn todo_finished(todo_id: u64) -> PendingEvent {
     pending_event("TodoFinished", &format!(r#"{{"todo_id":{todo_id}}}"#))
 }
 
+pub fn chores_summarized(total: u64, completed: u64) -> PendingEvent {
+    pending_event(
+        "ChoresSummarized",
+        &format!(r#"{{"total":{total},"completed":{completed}}}"#),
+    )
+}
+
 /// The same Event, carrying `metadata`.
 pub fn with_metadata(event: PendingEvent, metadata: &str) -> PendingEvent {
     PendingEvent {
