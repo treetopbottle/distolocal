@@ -53,3 +53,24 @@ fn create_stream_that_is_closed() {
     );
     assert_snapshot!(pprint_store(&store), @r#""Chores" open 2026-01-01T00:00:00Z closed 2026-01-01T00:00:01Z"#);
 }
+
+#[test]
+fn create_stream_that_was_deleted() {
+    let mut store = parse_store(
+        r#"
+        "Chores" open 2026-01-01T00:00:00Z closed 2026-01-01T00:00:02Z
+          2026-01-01T00:00:01Z TodoCreated {node-a:1}
+            data {"todo_id":1,"title":"Take out the trash"}
+            metadata {}
+        "#,
+    );
+    store
+        .delete_stream("Chores")
+        .expect("deleting a closed Stream should succeed");
+
+    store
+        .create_stream("Chores")
+        .expect("recreating a deleted Stream should succeed");
+
+    assert_snapshot!(pprint_store(&store), @r#""Chores" open 2026-01-01T00:00:03Z"#);
+}
