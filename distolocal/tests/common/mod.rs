@@ -84,6 +84,14 @@ pub fn with_metadata(event: PendingEvent, metadata: &str) -> PendingEvent {
     }
 }
 
+/// The same Event, under `event_id` instead of a generated one.
+pub fn with_event_id(event: PendingEvent, event_id: &str) -> PendingEvent {
+    PendingEvent {
+        event_id: event_id.to_string(),
+        ..event
+    }
+}
+
 /// A distinct `event_id`, for the Events no test pins one on.
 pub fn next_event_id() -> String {
     static NEXT_EVENT_ID: AtomicU64 = AtomicU64::new(1);

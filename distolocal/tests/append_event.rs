@@ -1,6 +1,8 @@
 mod common;
 
-use common::{parse_store, pprint_store, todo_created, todo_finished, todo_list_created};
+use common::{
+    parse_store, pprint_store, todo_created, todo_finished, todo_list_created, with_event_id,
+};
 use distolocal::Error;
 use insta::assert_snapshot;
 
@@ -98,6 +100,77 @@ fn append_event_to_stream_with_existing_events() {
         metadata {}
       2026-01-01T00:00:03Z TodoFinished {node-a:3}
         data {"todo_id":1}
+        metadata {}
+    "#);
+}
+
+#[test]
+fn append_event_reusing_an_event_id() {
+    let mut store = parse_store(
+        r#"
+        "Chores" open 2026-01-01T00:00:00Z
+          2026-01-01T00:00:01Z TodoCreated {node-a:1}
+            data {"todo_id":1,"title":"Take out the trash"}
+            metadata {}
+        "#,
+    );
+    let first = store
+        .append_event(
+            "Chores",
+            with_event_id(todo_created(2, "Wash the dishes"), "X"),
+        )
+        .expect("appending to an open Stream should succeed");
+
+    let retried = store.append_event(
+        "Chores",
+        with_event_id(todo_created(2, "Wash the dishes"), "X"),
+    );
+
+    assert_eq!(
+        retried,
+        Err(Error::EventIdConflict {
+            stored: Box::new(first),
+        })
+    );
+    assert_snapshot!(pprint_store(&store), @r#"
+    "Chores" open 2026-01-01T00:00:00Z
+      2026-01-01T00:00:01Z TodoCreated {node-a:1}
+        data {"todo_id":1,"title":"Take out the trash"}
+        metadata {}
+      2026-01-01T00:00:02Z TodoCreated {node-a:2}
+        data {"todo_id":2,"title":"Wash the dishes"}
+        metadata {}
+    "#);
+}
+
+#[test]
+fn append_event_referencing_a_todo_that_does_not_exist() {
+    let mut store = parse_store(
+        r#"
+        "Chores" open 2026-01-01T00:00:00Z
+          2026-01-01T00:00:01Z TodoCreated {node-a:1}
+            data {"todo_id":1,"title":"Take out the trash"}
+            metadata {}
+          2026-01-01T00:00:02Z TodoCreated {node-a:2}
+            data {"todo_id":2,"title":"Wash the dishes"}
+            metadata {}
+        "#,
+    );
+
+    store
+        .append_event("Chores", todo_finished(99))
+        .expect("the Store does not check what data means");
+
+    assert_snapshot!(pprint_store(&store), @r#"
+    "Chores" open 2026-01-01T00:00:00Z
+      2026-01-01T00:00:01Z TodoCreated {node-a:1}
+        data {"todo_id":1,"title":"Take out the trash"}
+        metadata {}
+      2026-01-01T00:00:02Z TodoCreated {node-a:2}
+        data {"todo_id":2,"title":"Wash the dishes"}
+        metadata {}
+      2026-01-01T00:00:03Z TodoFinished {node-a:3}
+        data {"todo_id":99}
         metadata {}
     "#);
 }
