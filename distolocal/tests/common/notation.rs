@@ -14,8 +14,8 @@
 //! A closed Stream's header goes on with the time it closed:
 //! `"chores-3f2a1c" open 2026-01-01T00:00:02Z closed 2026-01-01T00:00:05Z`.
 //!
-//! `metadata {}` means no metadata, and a hand-written text may leave the line
-//! out. Payloads are one line of text each.
+//! Every Event has both payload lines, and `metadata {}` means no metadata.
+//! Payloads are one line of text each.
 
 use super::{NODE_ID, SteppingClock, next_event_id};
 use distolocal::{Event, PendingEvent, Store, Stream, StreamStatus};
@@ -155,7 +155,9 @@ fn replay(store: &mut Store, clock: &SteppingClock, stream: &ParsedStream) {
                     event_id: next_event_id(),
                     event_type: event.event_type.clone(),
                     data: event.data.clone(),
-                    metadata: event.metadata.clone(),
+                    metadata: event.metadata.clone().unwrap_or_else(|| {
+                        panic!("parse_store: {} has no metadata line", event.event_type)
+                    }),
                 },
             )
             .expect("appending to an open Stream should succeed");
@@ -187,7 +189,7 @@ struct ParsedEvent {
     event_type: String,
     vector_clock: HashMap<String, u64>,
     data: Vec<u8>,
-    metadata: Vec<u8>,
+    metadata: Option<Vec<u8>>,
 }
 
 fn parse(text: &str) -> Vec<ParsedStream> {
@@ -204,10 +206,10 @@ fn parse(text: &str) -> Vec<ParsedStream> {
         } else if let Some(data) = line.strip_prefix("data ") {
             last_event(&mut streams, line).data = data.as_bytes().to_vec();
         } else if let Some(metadata) = line.strip_prefix("metadata ") {
-            last_event(&mut streams, line).metadata = match metadata {
+            last_event(&mut streams, line).metadata = Some(match metadata {
                 NO_METADATA => Vec::new(),
                 metadata => metadata.as_bytes().to_vec(),
-            };
+            });
         } else {
             streams
                 .last_mut()
@@ -259,7 +261,7 @@ fn parse_event(line: &str) -> ParsedEvent {
         event_type: event_type.to_string(),
         vector_clock: parse_vector_clock(vector_clock),
         data: Vec::new(),
-        metadata: Vec::new(),
+        metadata: None,
     }
 }
 
