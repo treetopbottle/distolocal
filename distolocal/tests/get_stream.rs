@@ -1,6 +1,6 @@
 mod common;
 
-use common::{pprint_stream, store, store_with, todo_created};
+use common::{parse_store, pprint_stream, store};
 use distolocal::Error;
 use insta::assert_snapshot;
 
@@ -20,10 +20,14 @@ fn get_stream_that_does_not_exist() {
 
 #[test]
 fn get_stream_that_is_open() {
-    let mut store = store_with(&["Chores"]);
-    store
-        .append_event("Chores", todo_created(1, "Take out the trash"))
-        .expect("appending to an open Stream should succeed");
+    let store = parse_store(
+        r#"
+        "Chores" open 2026-01-01T00:00:00Z
+          2026-01-01T00:00:01Z TodoCreated {node-a:1}
+            data {"todo_id":1,"title":"Take out the trash"}
+            metadata {}
+        "#,
+    );
 
     let stream = store
         .get_stream("Chores")
@@ -34,10 +38,11 @@ fn get_stream_that_is_open() {
 
 #[test]
 fn get_stream_that_is_closed() {
-    let mut store = store_with(&["Chores"]);
-    store
-        .close_stream("Chores")
-        .expect("closing an open Stream should succeed");
+    let store = parse_store(
+        r#"
+        "Chores" open 2026-01-01T00:00:00Z closed 2026-01-01T00:00:01Z
+        "#,
+    );
 
     let stream = store
         .get_stream("Chores")

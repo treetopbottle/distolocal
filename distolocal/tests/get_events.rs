@@ -1,6 +1,6 @@
 mod common;
 
-use common::{parse_store, pprint_events, store, store_with, todo_created, todo_finished};
+use common::{parse_store, pprint_events, store};
 use distolocal::Error;
 use insta::assert_snapshot;
 
@@ -20,7 +20,11 @@ fn get_events_of_stream_that_does_not_exist() {
 
 #[test]
 fn get_events_of_empty_stream() {
-    let store = store_with(&["Groceries"]);
+    let store = parse_store(
+        r#"
+        "Groceries" open 2026-01-01T00:00:00Z
+        "#,
+    );
 
     let events = store
         .get_events("Groceries")
@@ -31,16 +35,20 @@ fn get_events_of_empty_stream() {
 
 #[test]
 fn get_events_of_stream_with_events() {
-    let mut store = store_with(&["Chores"]);
-    store
-        .append_event("Chores", todo_created(1, "Take out the trash"))
-        .expect("appending to an open Stream should succeed");
-    store
-        .append_event("Chores", todo_created(2, "Wash the dishes"))
-        .expect("appending to an open Stream should succeed");
-    store
-        .append_event("Chores", todo_finished(1))
-        .expect("appending to an open Stream should succeed");
+    let store = parse_store(
+        r#"
+        "Chores" open 2026-01-01T00:00:00Z
+          2026-01-01T00:00:01Z TodoCreated {node-a:1}
+            data {"todo_id":1,"title":"Take out the trash"}
+            metadata {}
+          2026-01-01T00:00:02Z TodoCreated {node-a:2}
+            data {"todo_id":2,"title":"Wash the dishes"}
+            metadata {}
+          2026-01-01T00:00:03Z TodoFinished {node-a:3}
+            data {"todo_id":1}
+            metadata {}
+        "#,
+    );
 
     let events = store
         .get_events("Chores")
