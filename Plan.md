@@ -119,6 +119,7 @@ step 7 dump depend on it.
   → **checkpoint.**
 - **5b (implementation):** implement `read_stream`, returning a borrowed
   `&[Event]` rather than owned copies (DECISIONS.md 0013).
+  Later renamed `get_events`, to pair with `get_stream` (DECISIONS.md 0025).
 
 ### Step 6 — Inject the clock into the Store [DONE]
 

@@ -5,7 +5,7 @@ use distolocal::Error;
 use insta::assert_snapshot;
 
 #[test]
-fn read_stream_that_does_not_exist() {
+fn get_events_of_stream_that_does_not_exist() {
     let store = store();
 
     let result = store.get_events("Groceries");
@@ -19,7 +19,7 @@ fn read_stream_that_does_not_exist() {
 }
 
 #[test]
-fn read_stream_that_is_empty() {
+fn get_events_of_empty_stream() {
     let store = store_with(&["Groceries"]);
 
     let events = store
@@ -30,7 +30,7 @@ fn read_stream_that_is_empty() {
 }
 
 #[test]
-fn read_stream_with_events() {
+fn get_events_of_stream_with_events() {
     let mut store = store_with(&["Chores"]);
     store
         .append_event("Chores", todo_created(1, "Take out the trash"))
@@ -60,7 +60,7 @@ fn read_stream_with_events() {
 }
 
 #[test]
-fn read_stream_that_is_closed() {
+fn get_events_of_closed_stream() {
     let store = parse_store(
         r#"
         "Chores" open 2026-01-01T00:00:00Z closed 2026-01-01T00:00:04Z

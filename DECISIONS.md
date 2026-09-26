@@ -240,7 +240,8 @@ tests — instead of calling `OffsetDateTime::now_utc()` directly.
 
 ## 0013 — `read_stream` returns borrowed Events, not owned copies
 
-Accepted · 2026-09-21 · Technical · relates to 0007
+Accepted · 2026-09-21 · Technical · relates to 0007 · its function renamed
+`get_events` by 0025
 
 `Store::read_stream(&self, stream_id) -> Result<&[Event], Error>` hands out a
 slice into the Store's own storage. A caller that needs its own copy — to
@@ -560,3 +561,21 @@ this slice.
   "never" is often a legal minimum and privacy law can require erasure.
   Decide it alongside tombstones (0023): a Stream that can't be deleted
   never needs one.
+
+## 0025 — Read Stream's function is `get_events`
+
+Accepted · 2026-09-26 · Technical · relates to 0013, 0017
+
+The Store's function for Read Stream is `get_events`, the name 0013 and
+Plan.md's early steps give as `read_stream`. Its tests follow 0017's
+`<function>_<situation>` and live in `tests/get_events.rs`. The feature in
+SPECIFICATION.md keeps its name, Read Stream.
+
+- **Why:** `get_stream` and `get_events` read as a pair, each naming the half
+  of a Stream it hands back — the record or the Events. Beside `get_stream`,
+  `read_stream` sounds like a second way to get the same thing. The rename
+  landed in 195aa05 without a record; this is that record.
+- **Cost:** the function's name no longer matches the feature's, so finding
+  the code for Read Stream means knowing the mapping.
+- **Alternatives:** going back to `read_stream`, matching the feature name —
+  rejected for the pairing above.
