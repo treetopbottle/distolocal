@@ -366,7 +366,7 @@ it:
 - **13b [DONE]:** empty — the test passed against steps 1–12's
   implementation as written.
 
-### Step 14: Double check specification rules
+### Step 14: Double check specification rules [DONE]
 
 - **14:** Check if the rules specified in SPECIFICATION.md, including the 
   examples, are well represented in the tests. Also check if there is a better
@@ -376,6 +376,33 @@ it:
   good if the notation used in the SPECIFICATION.md matches the one used in the
   snapshot tests.
 
+  Every example had a test, bar the ones left without on purpose. What came
+  out of the check:
+  - Each feature now follows one template, a section per state the Stream can
+    be in — absent, open, closed — with its examples listed under each. A
+    state × operation table was proposed instead and dropped: the spec should
+    read as plain text, without a rendering step.
+  - The examples' `Given`s and `Then`s are written in the test notation, each
+    copied from its test, so an example pastes straight into `parse_store` or
+    an `assert_snapshot!`. `metadata {}` became mandatory in the notation, so
+    every Event reads as the same three lines in both places.
+  - Three ids retired, never reused: `AppendEvent.04` (merged into `.03`, as
+    its test already was), `.10` (merged into `.05`, step 8a) and `.08` (it
+    described the Application, not the Store). `AppendEvent.11` stays, marked
+    as waiting for the adapters; `DeleteStream.03` stays, covered by the
+    narrative test.
+  - Spec text now says what the code and tests already did: what Create,
+    Append and Close return, that the Store assigns `vector_clock` and
+    `created_at`, and that an append to a closed Stream fails before its
+    `event_id` is checked. `InvalidEvent` left the Store's errors table.
+  - `read_stream` had become `get_events` without a record; `get_events`
+    stays (DECISIONS.md 0025), and its tests are named after it.
+  - The Get tests arrange through `parse_store` like the others.
+  - The features and their rules moved out of SPECIFICATION.md into
+    EVENT_AND_STREAM_MANAGEMENT.md, which opens with a one-line summary of
+    every rule, each linking to its examples. The narrative and the "closing
+    the books" pattern stay in SPECIFICATION.md, linking into the new file.
+
 ---
 
 ## After this plan
@@ -383,6 +410,8 @@ it:
 Once this lands, Event and Stream management (v1, single-writer, in-memory) is
 feature-complete against SPECIFICATION.md. Next slices, not covered here:
 
+- Idea: do a snapshot test for the public API of the store. This serves both
+  as documentation and a safeguard against backwards incompatible changes.
 - Persistence (currently in-memory only). The step 7 dump is test-only and
   deliberately not a candidate format for it.
 - Stream subscription (push/hooks) — builds on this.
