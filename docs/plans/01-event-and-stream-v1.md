@@ -1,5 +1,9 @@
 # Plan: Event and Stream management (v1)
 
+Status: Done · 2026-09-15 to 2026-09-27. File names below are as they were at
+the time: SPECIFICATION.md, EVENT_AND_STREAM_MANAGEMENT.md and DECISIONS.md
+are now under `docs/`.
+
 Scope: the first vertical slice from README's "Core use cases" — Event and
 Stream management only (Create/Append/Read/Close/Delete Stream), in-memory,
 single process. Stream subscription and Node replication come later, once this
@@ -407,22 +411,4 @@ it:
 
 ## After this plan
 
-Once this lands, Event and Stream management (v1, single-writer, in-memory) is
-feature-complete against SPECIFICATION.md. Next slices, not covered here:
-
-- Idea: do a snapshot test for the public API of the store. This serves both
-  as documentation and a safeguard against backwards incompatible changes.
-- Persistence (currently in-memory only). The step 7 dump is test-only and
-  deliberately not a candidate format for it.
-- Stream subscription (push/hooks) — builds on this.
-- Node replication, and the still-open questions in DECISIONS.md 0003/0006
-  (vector clocks, concurrent writers to the same Stream at the same Node).
-  Stream deletion needs rethinking here: tombstones, so Nodes remember a
-  deleted Stream and a recreated id doesn't restart its vector clock
-  (DECISIONS.md 0023).
-- A public API protocol (JSON first; gRPC/Avro anticipated — see
-  DECISIONS.md 0007). Today the only "API" is the Store's Rust function
-  calls used directly by these tests. `AppendEvent.11`'s shape validation
-  lands here, in the adapters (DECISIONS.md 0018).
-
-Don't start those until this slice is reviewed and merged.
+Moved to the [backlog](README.md#backlog).

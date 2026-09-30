@@ -1,5 +1,9 @@
 # Plan: simplify the remaining code files
 
+Status: Done · 2026-09-24. File names below are as they were at the time:
+Plan.md, SPECIFICATION.md and DECISIONS.md are now under `docs/`, and
+`tests/read_stream.rs` is `tests/get_events.rs`.
+
 Do to the rest of the code what 61a4600 did to `tests/append_event.rs` and
 17e5a65 did to `tests/notation.rs`. This is a cleanup only: no behavior
 changes and no changes to the public API.

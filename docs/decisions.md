@@ -19,6 +19,8 @@ rather than changing what it decided. Add every new entry to the index.
 
 ### Schema
 
+The fields themselves are in [spec/schemas.md](spec/schemas.md).
+
 - [0003 — A vector clock on Event replaces `sequence_number`](#0003)
 - [0014 — An Event's Store-assigned time is `created_at`, not `timestamp`](#0014)
 - [0020 — A Stream records when it was closed](#0020) — _representation superseded by 0021_
@@ -31,6 +33,12 @@ rather than changing what it decided. Add every new entry to the index.
 - [0019 — The Store checks `event_id` uniqueness, not Event equality](#0019)
 - [0023 — Deleting a Stream that doesn't exist is `StreamNotFound`](#0023)
 - [0025 — Read Stream's function is `get_events`](#0025)
+
+### Specification and docs
+
+- [0026 — A feature is specified per Stream state, in the test notation](#0026)
+- [0027 — Rule ids are retired, never reused](#0027)
+- [0028 — Docs are split by how long they stay true](#0028)
 
 ### Architecture
 
@@ -441,3 +449,55 @@ The feature keeps its name, Read Stream; its tests live in
   way to get the same thing. This records the rename made in 195aa05.
 - **Cost:** the function's name no longer matches the feature's.
 - **Alternatives:** going back to `read_stream`.
+
+<a id="0026"></a>
+## 0026 — A feature is specified per Stream state, in the test notation
+
+Accepted · 2026-09-27 · Technical · relates to 0010, 0011
+
+Each feature has a section per state a Stream can be in — absent, open,
+closed — with its rules and examples under each. An example's `Given` and
+`Then` are written in the notation `parse_store` and `pprint_store` use,
+copied from its test, so it pastes straight into a test. Every Event in the
+notation has a `metadata` line, `{}` when empty.
+
+- **Why:** the states are what every rule turns on, so each feature reads the
+  same way and a missing case shows as an empty section. One notation means
+  the spec and the tests can't describe the same state differently.
+- **Cost:** examples are copied from tests by hand, and nothing checks they
+  stay in step.
+- **Alternatives:** a state × operation table — needs a rendering step; the
+  spec should read as plain text. Examples in their own prose notation, as
+  before — they can't be pasted into a test or checked against one.
+
+<a id="0027"></a>
+## 0027 — Rule ids are retired, never reused
+
+Accepted · 2026-09-27 · Technical · relates to 0017, 0026
+
+A rule id like `AppendEvent.04` names one rule forever. A rule that is merged
+or dropped leaves a gap: `AppendEvent.04` merged into `.03`, `.10` into `.05`,
+and `.08` dropped, since it described the Application, not the Store.
+
+- **Why:** commits, plans and decisions cite ids. Reusing one would make an
+  old reference point at a different rule.
+- **Cost:** gaps in the numbering.
+
+<a id="0028"></a>
+## 0028 — Docs are split by how long they stay true
+
+Accepted · 2026-09-30 · Technical · relates to 0026
+
+Under `docs/`: `spec/` says what Distolocal does now, one file per component
+plus an index; `decisions.md` says why, append-only; `plans/` says how we get
+there, one file per slice, kept as history once done, with the backlog in
+their index. References point only toward the longer-lived: plans cite the
+spec and decisions, the spec cites decisions, and neither cites a plan. When a
+plan finishes, what should outlive it moves into the spec or here.
+
+- **Why:** finished plans sat in the root beside the spec, holding the
+  backlog and step 14's decisions, and went stale. The spec carried
+  rationale in its schema comments and placeholder sections.
+- **Cost:** old commits and plans name the files as they were.
+- **Alternatives:** one file per decision — the index works at this size.
+  Deleting finished plans — their steps explain how the code got its shape.

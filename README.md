@@ -44,4 +44,4 @@ These are the domain entities. The convention is to capitalize them.
     + Builds on Stream subscription
     + Version conflicts and data merges are handled by the Application, not Distolocal
 
-For detailed specifications, see [SPECIFICATION.md](SPECIFICATION.md).
+For detailed specifications, see [docs/spec](docs/spec/README.md). Why things are the way they are is in [docs/decisions.md](docs/decisions.md), and the work planned and done in [docs/plans](docs/plans/README.md).

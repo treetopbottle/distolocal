@@ -1,4 +1,4 @@
-//! SPECIFICATION.md's narrative, "Annabel and the Todo Application", told
+//! The spec's narrative, "Annabel and the Todo Application", told
 //! through the Store's API with the Store's state after each part. Unlike
 //! the other tests, its comments tell the story it follows.
 

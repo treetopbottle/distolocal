@@ -1,6 +1,6 @@
 # Event and Stream management
 
-The features for creating, appending to, reading, closing and deleting Streams, with the rules each one follows and an example of every rule. Part of [SPECIFICATION.md](SPECIFICATION.md), which has the schemas, the errors and the narrative these examples come from.
+The features for creating, appending to, reading, closing and deleting Streams, with the rules each one follows and an example of every rule. Part of the [specification](README.md), which has the errors and the narrative these examples come from; the records are in [schemas.md](schemas.md).
 
 Concurrent writers to the same Stream are out of scope here — that is handled by Node replication.
 
@@ -210,7 +210,7 @@ Then the Store holds:
 <a id="append-event-id"></a>
 **Rule: an `event_id` is unique within its Stream — an Append reusing one is rejected with an `EventIdConflict` error carrying the Event already stored, whatever the new Event holds**
 
-The Store compares `event_id`s only, never the rest of the Event: it cannot tell a retry from a mistake, since `data` is opaque and a retry may encode it differently. The Application can, from the stored Event the error carries — for a retry of an append that already landed it treats the error as success, which is how it gets idempotency (see DECISIONS.md 0019). An HTTP adapter answers it with 409 Conflict.
+The Store compares `event_id`s only, never the rest of the Event: it cannot tell a retry from a mistake, since `data` is opaque and a retry may encode it differently. The Application can, from the stored Event the error carries — for a retry of an append that already landed it treats the error as success, which is how it gets idempotency (see [decision 0019](../decisions.md#0019)). An HTTP adapter answers it with 409 Conflict.
 
 **`AppendEvent.05`** Retrying the same append after an interrupted write
 ```
@@ -265,7 +265,7 @@ Then the Store holds:
 <a id="append-invalid-event"></a>
 **Rule: rejected with an `InvalidEvent` error by the API adapter if the Event's shape is malformed — the request never reaches the Store**
 
-Shape is checked where an Event arrives as untyped input: an HTTP or gRPC request. The Store's own API takes a typed Event, which cannot be missing a field or hold one of the wrong type, so the Store does not check shape again (see DECISIONS.md 0018). Not yet tested: this waits for the API adapters.
+Shape is checked where an Event arrives as untyped input: an HTTP or gRPC request. The Store's own API takes a typed Event, which cannot be missing a field or hold one of the wrong type, so the Store does not check shape again (see [decision 0018](../decisions.md#0018)). Not yet tested: this waits for the API adapters.
 
 **`AppendEvent.11`** Appending an Event missing a required field
 ```
@@ -498,7 +498,7 @@ Deletes a closed Stream and every Event in it, returning nothing. The Store keep
 ### Stream absent
 
 <a id="delete-absent"></a>
-**Rule: rejected with a `StreamNotFound` error — whether the Stream was never created or already deleted, since the Store keeps no record of a deleted Stream to tell the two apart (see DECISIONS.md 0023)**
+**Rule: rejected with a `StreamNotFound` error — whether the Stream was never created or already deleted, since the Store keeps no record of a deleted Stream to tell the two apart (see [decision 0023](../decisions.md#0023))**
 
 An Application retrying a delete whose reply it lost gets this error, and can treat it as the Stream being gone.
 

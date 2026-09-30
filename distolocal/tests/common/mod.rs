@@ -69,7 +69,7 @@ pub fn store_with(stream_ids: &[&str]) -> Store {
     store
 }
 
-// The Events from SPECIFICATION.md's Todo narrative.
+// The Events from the Todo narrative in docs/spec/README.md.
 
 pub fn todo_list_created(name: &str) -> PendingEvent {
     pending_event("TodoListCreated", &format!(r#"{{"name":"{name}"}}"#))
