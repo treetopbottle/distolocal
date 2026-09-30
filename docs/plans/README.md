@@ -6,7 +6,8 @@ that should outlive it moves into the spec or the
 [decisions](../decisions.md), and the plan stays here as history
 ([decision 0028](../decisions.md#0028)).
 
-The working agreement in plan 01 applies to every plan.
+Every plan follows the working agreement in [AGENTS.md](../../AGENTS.md);
+plan 01 has the original.
 
 | Plan | Status |
 |---|---|
