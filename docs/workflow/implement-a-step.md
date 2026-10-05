@@ -30,11 +30,11 @@ anything.
 
 ## Review
 
-1. [Review the step's commits](review-changes.md). The review goes in the
+1. [Review the step's commits](review.md). The review goes in the
    plan's folder; commit it on its own, before any fix.
 2. Deal with each finding in a new commit, not by rewriting the reviewed
    ones. Then add the review's Outcome section and commit it.
-3. If the fixes change much, review them again, in a new review file.
+3. If that changed any code, review again, in a new review file.
 
 ## Afterwards
 

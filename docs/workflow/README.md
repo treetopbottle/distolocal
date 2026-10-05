@@ -10,8 +10,11 @@ A slice of work goes through these in order:
    split it into steps. The plan is reviewed before any step starts.
 2. [Implement a step](implement-a-step.md): one step of a plan, tests first,
    then reviewed.
-3. [Review changes](review-changes.md): check a plan, or a step's commits,
-   against the spec and the decisions.
+3. [Finish a plan](finish-a-plan.md): keep what should outlive it, then
+   review and clean up the decisions.
+
+[Review](review.md) is how each of these is reviewed: a
+plan, a step's commits, or the decisions, against the spec and the code.
 
 The [code checks](code-checks.md) apply to implementing and reviewing a
 step.

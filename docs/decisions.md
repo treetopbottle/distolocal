@@ -5,7 +5,10 @@ what we keep.
 
 Guidelines: one short entry per decision, keeping the *why*, the cost and the
 rejected alternatives. Don't renumber. Mark a decision `Superseded by NNNN`
-rather than changing what it decided. Add every new entry to the index.
+rather than changing what it decided. Once it is wholly superseded, move it,
+anchor and all, to [Superseded decisions](#superseded-decisions) at the end.
+Add every new entry to the index, and after the last entry above Superseded
+decisions.
 
 ## Index
 
@@ -50,13 +53,16 @@ The fields themselves are in [spec/schemas.md](spec/schemas.md).
 ### Testing
 
 - [0008 — Test data lives in plain helpers, not a fixture crate](#0008)
-- [0009 — Given/When/Then lives in comments](#0009) — _superseded by 0017_
 - [0010 — Approval testing for Stream contents](#0010)
 - [0011 — One test-only notation for both Given and Then](#0011)
 - [0015 — A `Given`'s times drive the Store's clock](#0015) — _mechanism superseded by 0022_
 - [0016 — `dump` renders the whole Store, via a test-only `stream_ids`](#0016)
 - [0017 — A test says what it covers in its name, not in comments](#0017)
 - [0022 — A `Given` sets the clock to each of its times](#0022)
+
+### Superseded
+
+- [0009 — Given/When/Then lives in comments](#0009) — _by 0017_
 
 ---
 
@@ -161,21 +167,6 @@ Shared setup and test data live in `distolocal/tests/common/mod.rs`.
   Named constructors fix that without a dev-dependency.
 - **Alternatives:** `rstest`, for fixtures and parameterized cases — revisit
   when one assertion has to run across many inputs.
-
-<a id="0009"></a>
-## 0009 — Given/When/Then lives in comments
-
-Superseded by 0017 · 2026-09-19 · Technical · relates to 0008
-
-Each test carried its `FeatureRule.NN` id and the spec's Given/When/Then as
-comments above plain arrange/act/assert code.
-
-- **Why:** anchors each test to the spec text; the code stays plain Rust.
-- **Cost:** nothing ties a comment to the code beneath it. 0011 closed that
-  gap for the `Given`.
-- **Alternatives:** a `World` DSL, holding the Store and the last outcome
-  behind `given_*`/`when_*`/`then_*` methods — closes the gap, but more
-  machinery. `cucumber` — too heavy, and duplicates the spec text.
 
 <a id="0010"></a>
 ## 0010 — Approval testing for Stream contents
@@ -509,7 +500,7 @@ plan finishes, what should outlive it moves into the spec or here.
 Accepted · 2026-10-05 · Technical · relates to 0028
 
 Each plan has a folder under `docs/plans/`: the plan is its `README.md`, and
-each review of a step is a file beside it. A review names the commit range it
+each review of it is a file beside it. A review names the commit range it
 covers, keeps its findings as written, and gets an Outcome section once
 they're dealt with. Once a review has started, its commits are not
 rewritten: a fix is a new commit. Before that, amending is fine.
@@ -523,3 +514,22 @@ rewritten: a fix is a new commit. Before that, amending is fine.
 - **Alternatives:** a summary line per step in the plan — loses the reviewed
   state. A section in the plan — full reports would bury the steps. A
   `docs/reviews/` folder — separates a review from its plan.
+
+---
+
+## Superseded decisions
+
+<a id="0009"></a>
+## 0009 — Given/When/Then lives in comments
+
+Superseded by 0017 · 2026-09-19 · Technical · relates to 0008
+
+Each test carried its `FeatureRule.NN` id and the spec's Given/When/Then as
+comments above plain arrange/act/assert code.
+
+- **Why:** anchors each test to the spec text; the code stays plain Rust.
+- **Cost:** nothing ties a comment to the code beneath it. 0011 closed that
+  gap for the `Given`.
+- **Alternatives:** a `World` DSL, holding the Store and the last outcome
+  behind `given_*`/`when_*`/`then_*` methods — closes the gap, but more
+  machinery. `cucumber` — too heavy, and duplicates the spec text.
