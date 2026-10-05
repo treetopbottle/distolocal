@@ -7,8 +7,8 @@ the plan is its `README.md`, next to the reviews of its steps
 should outlive it moves into the spec or the [decisions](../decisions.md),
 and the folder stays here as history ([decision 0028](../decisions.md#0028)).
 
-Every plan follows the working agreement in [AGENTS.md](../../AGENTS.md);
-plan 01 has the original.
+Every plan follows the working agreement in
+[CONTRIBUTING.md](../../CONTRIBUTING.md); plan 01 has the original.
 
 | Plan | Status |
 |---|---|

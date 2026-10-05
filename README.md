@@ -1,6 +1,6 @@
 # Distolocal
 
-Distributed event storage.
+Distributed event storage: a local-first event store, written in Rust.
 
 This is a specification of the software using a why? who? what? approach. Where possible, specification by example is used.
 
@@ -44,4 +44,21 @@ These are the domain entities. The convention is to capitalize them.
     + Builds on Stream subscription
     + Version conflicts and data merges are handled by the Application, not Distolocal
 
-For detailed specifications, see [docs/spec](docs/spec/README.md). Why things are the way they are is in [docs/decisions.md](docs/decisions.md), and the work planned and done in [docs/plans](docs/plans/README.md).
+## Where things are
+
+- [distolocal/](distolocal/): the crate. `src/lib.rs` is the Store; `tests/` holds one file per feature, and `tests/common/` the test helpers and the plain-text notation.
+- [docs/spec/](docs/spec/README.md): what Distolocal does now, in detail.
+- [docs/decisions.md](docs/decisions.md): why it is the way it is.
+- [docs/plans/](docs/plans/README.md): how we get there, one folder per slice with its plan and the reviews of its steps, and the backlog.
+- [docs/workflow/](docs/workflow/README.md): how to do each kind of task.
+- [CONTRIBUTING.md](CONTRIBUTING.md): how we work in this repo.
+- [AGENTS.md](AGENTS.md): what coding agents need on top of that.
+
+## Development
+
+From `distolocal/`:
+
+- `cargo fmt`, and `cargo fmt --check` to check without changing files
+- `cargo test`
+- `cargo clippy --all-targets`, which must be clean
+- `cargo insta review`, only to update a snapshot that was already approved

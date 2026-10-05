@@ -25,8 +25,8 @@ Write `docs/plans/NN-<slug>/README.md`, numbered after the last plan, with:
 - **Design:** how the code will do it: the types and functions it adds or
   changes, the public API, and the files it touches. A choice that isn't
   obvious goes into `docs/decisions.md`, as `Undecided` if it is still open.
-- **Working agreement:** only what differs from AGENTS.md for this slice, if
-  anything.
+- **Working agreement:** only what differs from CONTRIBUTING.md for this
+  slice, if anything.
 - **Steps**, ordered by real dependency. Each step names the rule ids it
   covers and splits into **(a) tests** and **(b) implementation**. A step
   that only refactors or only changes docs has no split.
