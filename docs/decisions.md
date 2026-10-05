@@ -38,7 +38,8 @@ The fields themselves are in [spec/schemas.md](spec/schemas.md).
 
 - [0026 — A feature is specified per Stream state, in the test notation](#0026)
 - [0027 — Rule ids are retired, never reused](#0027)
-- [0028 — Docs are split by how long they stay true](#0028)
+- [0028 — Docs are split by how long they stay true](#0028) — _a plan is a folder since 0029_
+- [0029 — Reviews are kept next to their plan, and fixed forward](#0029)
 
 ### Architecture
 
@@ -501,3 +502,24 @@ plan finishes, what should outlive it moves into the spec or here.
 - **Cost:** old commits and plans name the files as they were.
 - **Alternatives:** one file per decision — the index works at this size.
   Deleting finished plans — their steps explain how the code got its shape.
+
+<a id="0029"></a>
+## 0029 — Reviews are kept next to their plan, and fixed forward
+
+Accepted · 2026-10-05 · Technical · relates to 0028
+
+Each plan has a folder under `docs/plans/`: the plan is its `README.md`, and
+each review of a step is a file beside it. A review names the commit range it
+covers, keeps its findings as written, and gets an Outcome section once
+they're dealt with. Once a review has started, its commits are not
+rewritten: a fix is a new commit. Before that, amending is fine.
+
+- **Why:** a review is a log of what the agents did and what was found. With
+  fixes made forward, its commit range is still in history, so the exact
+  state that was reviewed can be checked out. Next to the plan, the review is
+  found where its step is.
+- **Cost:** a folder per plan, more files, and no tidying of history after
+  a review.
+- **Alternatives:** a summary line per step in the plan — loses the reviewed
+  state. A section in the plan — full reports would bury the steps. A
+  `docs/reviews/` folder — separates a review from its plan.

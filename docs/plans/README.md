@@ -1,18 +1,19 @@
 # Plans
 
 How we get to what the [spec](../spec/README.md) describes. A plan is one
-slice of work, split into steps with checkpoints. When it is done, anything
-that should outlive it moves into the spec or the
-[decisions](../decisions.md), and the plan stays here as history
-([decision 0028](../decisions.md#0028)).
+slice of work, split into steps with checkpoints. Each plan has a folder:
+the plan is its `README.md`, next to the reviews of its steps
+([decision 0029](../decisions.md#0029)). When it is done, anything that
+should outlive it moves into the spec or the [decisions](../decisions.md),
+and the folder stays here as history ([decision 0028](../decisions.md#0028)).
 
 Every plan follows the working agreement in [AGENTS.md](../../AGENTS.md);
 plan 01 has the original.
 
 | Plan | Status |
 |---|---|
-| [01 — Event and Stream management (v1)](01-event-and-stream-v1.md) | Done |
-| [02 — Simplify the remaining code](02-simplify-code.md) | Done |
+| [01 — Event and Stream management (v1)](01-event-and-stream-v1/README.md) | Done |
+| [02 — Simplify the remaining code](02-simplify-code/README.md) | Done |
 
 ## Backlog
 

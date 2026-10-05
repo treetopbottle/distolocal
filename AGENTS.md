@@ -11,7 +11,8 @@ it.
   notation.
 - `docs/spec/`: what Distolocal does now.
 - `docs/decisions.md`: why it is the way it is.
-- `docs/plans/`: how we get there, one plan per slice, and the backlog.
+- `docs/plans/`: how we get there, one folder per slice with its plan and
+  the reviews of its steps, and the backlog.
 - `docs/workflow/`: how to do each kind of task.
 
 ## Commands
@@ -35,6 +36,9 @@ From `distolocal/`:
   (decision 0017).
 - **If the design doesn't hold up, stop.** Flag it, update the spec or the
   decisions, and adjust the plan before going on. Don't route around it.
+- **Fix forward.** Once a review of some commits has started, don't rewrite
+  them: a fix is a new commit, so the review's commit range stays what was
+  reviewed. Before that, amending is fine (decision 0029).
 - **Commit only when asked, and with a pathspec** (`git commit -- <paths>`).
   Files sometimes arrive in the index already staged.
 
@@ -49,7 +53,8 @@ Following decision 0028:
 - A plan has a status line. When it is done, move what should outlive it into
   the spec or the decisions.
 - References point only toward the longer-lived: plans cite the spec and the
-  decisions, the spec cites decisions, and neither cites a plan.
+  decisions, the spec cites decisions, and neither cites a plan. A plan and
+  its reviews may cite each other.
 
 ## Style
 
