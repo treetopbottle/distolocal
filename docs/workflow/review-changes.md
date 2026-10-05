@@ -11,22 +11,14 @@ the decisions they cite.
 
 ## Checks
 
-**Build.** From `distolocal/`: `cargo fmt --check`, `cargo test` and
-`cargo clippy --all-targets` are clean.
-
-**Tests.**
-- Each rule id the step names has a test, matched by name.
-- Each snapshot matches the spec's example for its rule. A snapshot that
-  doesn't, or has no example, is a finding: it may have been recorded rather
-  than written.
-- Names follow `<function>_<situation>`, with no spec comments.
+The [code checks](code-checks.md), then:
 
 **Spec and decisions.**
 - The code does what the spec says, and nothing the spec doesn't.
 - A choice the code makes that isn't obvious has a decision.
 - The plan step is marked done, and the docs follow the rules in AGENTS.md.
 
-**Code.**
+**Scope.**
 - The change is the least that does the job. No unused code, no comments
   that repeat the code.
 - A change to the public API is one the step asked for.

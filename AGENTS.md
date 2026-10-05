@@ -18,7 +18,7 @@ it.
 
 From `distolocal/`:
 
-- `cargo fmt`
+- `cargo fmt`, and `cargo fmt --check` to check without changing files
 - `cargo test`
 - `cargo clippy --all-targets`, which must be clean
 - `cargo insta review`, only to update a snapshot that was already approved
@@ -28,8 +28,9 @@ From `distolocal/`:
 - **Tests first, with a checkpoint.** Write a step's tests, stop and show
   them, and wait for an OK before implementing. Tests and implementation are
   separate commits. A test file already on disk is not an approved one.
-- **Snapshots are written, not recorded.** A `Then` is written by hand from
-  the spec, and fails until the implementation matches (decision 0010).
+- **Snapshots are written, not recorded.** A test's `Then` is an inline
+  `insta` snapshot, written by hand from the spec. It fails until the
+  implementation matches (decision 0010).
 - **Tests carry no spec comments.** A test is named `<function>_<situation>`
   (decision 0017).
 - **If the design doesn't hold up, stop.** Flag it, update the spec or the

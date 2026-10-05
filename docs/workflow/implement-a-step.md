@@ -11,8 +11,9 @@ step or a rule is unclear, ask before writing anything.
 ## (a) Tests
 
 1. Write one test per behavior, named `<function>_<situation>`. Arrange
-   through `parse_store`, and write each `Then` as an inline snapshot by
-   hand. The spec's examples are in the same notation, so they paste in.
+   through `parse_store`, and write each `Then` by hand as the inline
+   snapshot of decision 0010. The spec's examples are in the same notation,
+   so they paste in.
 2. Run `cargo test`. The new tests should fail, or not compile, for the
    reason the step expects.
 3. **Checkpoint.** Show the tests, with each of the step's rule ids matched
@@ -22,8 +23,7 @@ step or a rule is unclear, ask before writing anything.
 ## (b) Implementation
 
 1. Write the least code that makes the tests pass.
-2. Run `cargo fmt`, `cargo test` and `cargo clippy --all-targets`. All must
-   be clean.
+2. Run `cargo fmt`, then the [code checks](code-checks.md). All must pass.
 3. **Checkpoint.** Show the diff and wait for an OK.
 4. Commit it with a pathspec.
 
