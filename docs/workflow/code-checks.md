@@ -7,8 +7,8 @@ tests are still meant to fail. [review-changes](review-changes.md) runs them
 again on someone else's work.
 
 **Build.** From `distolocal/`, `cargo fmt --check`, `cargo test` and
-`cargo clippy --all-targets` run clean. See Commands in
-[AGENTS.md](../../AGENTS.md).
+`cargo clippy --all-targets` run clean. See Development in
+[README.md](../../README.md).
 
 **Tests.**
 - Each rule id the step names has a test, matched by name.

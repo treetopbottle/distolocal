@@ -38,7 +38,7 @@ The [code checks](code-checks.md), then:
 - The code does what the spec says, and nothing the spec doesn't.
 - The code follows the plan's Design, or the plan says why not.
 - A choice the code makes that isn't obvious has a decision.
-- The docs follow the rules in AGENTS.md.
+- The docs follow the rules in CONTRIBUTING.md.
 
 **Scope.**
 - The change is the least that does the job. No unused code, no comments

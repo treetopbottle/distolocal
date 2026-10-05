@@ -1,7 +1,8 @@
 # Workflow
 
 How to do each kind of task in this repo, for agents and for people. The
-working agreement in [AGENTS.md](../../AGENTS.md) applies throughout.
+working agreement in [CONTRIBUTING.md](../../CONTRIBUTING.md) applies
+throughout.
 
 A slice of work goes through these in order:
 
