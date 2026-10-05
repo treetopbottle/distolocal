@@ -30,7 +30,7 @@ Following decision 0028:
 - Decisions say why. Append-only; follow the guidelines at the top of
   `docs/decisions.md`.
 - A plan has a status line. When it is done, move what should outlive it into
-  the spec or the decisions.
+  the spec or the decisions ([finish a plan](docs/workflow/finish-a-plan.md)).
 - References point only toward the longer-lived: plans cite the spec and the
   decisions, the spec cites decisions, and neither cites a plan. A plan and
   its reviews may cite each other.

@@ -37,7 +37,7 @@ of the backlog.
 ## Review
 
 1. Commit the plan, and the docs it changed, with a pathspec.
-2. [Review the plan](review-changes.md). The review goes in the plan's
+2. [Review the plan](review.md). The review goes in the plan's
    folder; commit it on its own, before any fix.
 3. Deal with each finding in a new commit. Then add the review's Outcome
    section and commit it.

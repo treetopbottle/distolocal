@@ -2,10 +2,11 @@
 
 How we get to what the [spec](../spec/README.md) describes. A plan is one
 slice of work, split into steps with checkpoints. Each plan has a folder:
-the plan is its `README.md`, next to the reviews of its steps
+the plan is its `README.md`, next to its reviews
 ([decision 0029](../decisions.md#0029)). When it is done, anything that
 should outlive it moves into the spec or the [decisions](../decisions.md),
 and the folder stays here as history ([decision 0028](../decisions.md#0028)).
+A review that belongs to no plan gets a numbered folder here of its own.
 
 Every plan follows the working agreement in
 [CONTRIBUTING.md](../../CONTRIBUTING.md); plan 01 has the original.

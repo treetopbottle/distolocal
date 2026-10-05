@@ -3,8 +3,8 @@
 What must hold for a step's code and tests, while implementing and when
 reviewing. Run them before the implementation checkpoint in
 [implement-a-step](implement-a-step.md); at the tests checkpoint the new
-tests are still meant to fail. [review-changes](review-changes.md) runs them
-again on someone else's work.
+tests are still meant to fail. [Review](review.md) runs them again on
+someone else's work.
 
 **Build.** From `distolocal/`, `cargo fmt --check`, `cargo test` and
 `cargo clippy --all-targets` run clean. See Development in
