@@ -1,7 +1,7 @@
 # Write a plan
 
-Turn one slice of work into a plan: a file in `docs/plans/` that splits it
-into steps, each small enough to review.
+Turn one slice of work into a plan: a folder in `docs/plans/` whose
+`README.md` splits it into steps, each small enough to review.
 
 ## Before writing
 
@@ -14,7 +14,7 @@ into steps, each small enough to review.
 
 ## The plan
 
-Write `docs/plans/NN-<slug>.md`, numbered after the last plan, with:
+Write `docs/plans/NN-<slug>/README.md`, numbered after the last plan, with:
 
 - A title, and a status line: `Status: Draft`.
 - **Scope:** what the slice covers, and what it leaves out.

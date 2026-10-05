@@ -27,11 +27,19 @@ step or a rule is unclear, ask before writing anything.
 3. **Checkpoint.** Show the diff and wait for an OK.
 4. Commit it with a pathspec.
 
+## Review
+
+1. [Review the step's commits](review-changes.md). The review goes in the
+   plan's folder; commit it on its own, before any fix.
+2. Deal with each finding in a new commit, not by rewriting the reviewed
+   ones. Then add the review's Outcome section and commit it.
+3. If the fixes change much, review them again, in a new review file.
+
 ## Afterwards
 
-Mark the step `[DONE]` in the plan, with a line on anything that came out of
-it. A choice worth keeping goes into `docs/decisions.md`, and a change to what
-Distolocal does goes into the spec.
+Mark the step `[DONE]` in the plan, with links to its review files and a line
+on anything that came out of it. A choice worth keeping goes into
+`docs/decisions.md`, and a change to what Distolocal does goes into the spec.
 
 If the design doesn't hold up at any point, stop: flag it, update the spec or
 the decisions, and adjust the plan before going on.
