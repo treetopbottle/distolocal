@@ -11,5 +11,7 @@ A slice of work goes through these in order:
 3. [Review changes](review-changes.md): check a step's commits against the
    plan, the spec and the decisions.
 
+The [code checks](code-checks.md) apply to the last two.
+
 Each has a thin wrapper in `.agents/skills/`, so an agent that supports Agent
 Skills can start it by name. The wrapper only points here.
