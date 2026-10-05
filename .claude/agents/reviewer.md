@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Reviews Distolocal changes against the plan, the spec and the decisions, and reports findings. Use for the review-changes skill, or when asked to review changes or commits.
+description: Reviews a Distolocal plan, or a plan step's changes, against the spec and the decisions, and reports findings. Use for the review-changes skill, or when asked to review changes or commits.
 tools: Read, Grep, Glob, Bash
 ---
 

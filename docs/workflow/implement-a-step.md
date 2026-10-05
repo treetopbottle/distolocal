@@ -5,8 +5,9 @@ even when asked to finish the plan.
 
 ## Prepare
 
-Read the step, the spec rules it names, and the decisions they cite. If the
-step or a rule is unclear, ask before writing anything.
+Read the step, the plan's Design, the spec rules the step names, and the
+decisions they cite. If the step or a rule is unclear, ask before writing
+anything.
 
 ## (a) Tests
 
