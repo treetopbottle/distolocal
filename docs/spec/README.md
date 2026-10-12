@@ -10,19 +10,6 @@ What Distolocal does, as it stands. Where possible, specification by example is 
 
 The Event and Stream records are in [schemas.md](schemas.md).
 
-## Errors
-
-Errors returned by the Store's Event and Stream management features.
-
-| Error | Raised when |
-|---|---|
-| `StreamNotFound` | Append, Read, Get, Close or Delete is called on a Stream that doesn't exist — never created, or deleted |
-| `StreamClosed` | Append is called on a Stream that is closed, or Create is called on an id that belongs to a closed Stream |
-| `StreamNotClosed` | Delete is called on a Stream that is still open |
-| `EventIdConflict` | Append is called with an `event_id` already used in that Stream, whatever the new Event holds; the error carries the Event already stored (see AppendEvent.05) |
-
-The API adapters (HTTP, gRPC, …) add one of their own, `InvalidEvent`, for an Append request whose Event is missing a required field or holds one of the wrong type or format (see AppendEvent.11). The Store's own API is typed, so a malformed Event cannot reach it.
-
 ## Narrative: Annabel and the Todo Application
 
 Annabel installs the Todo app. The app creates a single "Lists" Stream that will record every list [Create Stream].

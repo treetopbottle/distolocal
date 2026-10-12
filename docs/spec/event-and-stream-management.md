@@ -46,7 +46,20 @@ Concurrent writers to the same Stream are out of scope here — that is handled 
 - [Stream open: fails with `StreamNotClosed`](#delete-open) — DeleteStream.01
 - [Stream closed: removes it and its Events, and no other Stream](#delete-closed) — DeleteStream.02, .03
 
-## Reading the examples
+## Errors
+
+Errors returned by the Store's Event and Stream management features.
+
+| Error | Raised when |
+|---|---|
+| `StreamNotFound` | Append, Read, Get, Close or Delete is called on a Stream that doesn't exist — never created, or deleted |
+| `StreamClosed` | Append is called on a Stream that is closed, or Create is called on an id that belongs to a closed Stream |
+| `StreamNotClosed` | Delete is called on a Stream that is still open |
+| `EventIdConflict` | Append is called with an `event_id` already used in that Stream, whatever the new Event holds; the error carries the Event already stored (see [AppendEvent.05](#append-event-id)) |
+
+The API adapters (HTTP, gRPC, …) add one of their own, `InvalidEvent`, for an Append request whose Event is missing a required field or holds one of the wrong type or format (see [AppendEvent.11](#append-invalid-event)). The Store's own API is typed, so a malformed Event cannot reach it.
+
+## Reading the feature's specification by exammple
 
 Each feature is described for the three states a Stream can be in:
 
