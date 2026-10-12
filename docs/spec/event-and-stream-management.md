@@ -8,43 +8,43 @@ Concurrent writers to the same Stream are out of scope here — that is handled 
 
 ### [Create Stream]
 
-- [Absent: creates an open Stream, with its `created_at` from the Store's clock, and returns it](#create-new) — CreateStream.01
-- [Absent after a delete: starts a fresh, empty Stream — deleting doesn't retire an id](#create-after-delete) — CreateStream.04
-- [Open: returns the Stream unchanged](#create-open) — CreateStream.02
-- [Closed: fails with `StreamClosed` — Create doesn't reopen a Stream](#create-closed) — CreateStream.03
+- [Stream absent: creates an open Stream, with its `created_at` from the Store's clock, and returns it](#create-new) — CreateStream.01
+- [Stream absent after delete: starts a fresh, empty Stream — deleting doesn't retire an id](#create-after-delete) — CreateStream.04
+- [Stream open: returns the Stream unchanged](#create-open) — CreateStream.02
+- [Stream closed: fails with `StreamClosed` — Create doesn't reopen a Stream](#create-closed) — CreateStream.03
 
 ### [Append Event]
 
-- [Absent: fails with `StreamNotFound` — Append doesn't create Streams](#append-absent) — AppendEvent.09
-- [Open: adds the Event at the end, with its `created_at` and `vector_clock` from the Store, and returns it; no other Stream changes](#append-to-end) — AppendEvent.01–.03
-- [Open: fails with `EventIdConflict`, carrying the stored Event, if the `event_id` is already used in the Stream](#append-event-id) — AppendEvent.05
-- [Open: doesn't check what `data` means](#append-opaque-data) — AppendEvent.07
-- [Open, through an API adapter: fails with `InvalidEvent` if the Event is malformed](#append-invalid-event) — AppendEvent.11
-- [Closed: fails with `StreamClosed`](#append-closed) — AppendEvent.06
+- [Stream absent: fails with `StreamNotFound` — Append doesn't create Streams](#append-absent) — AppendEvent.09
+- [Stream open: adds the Event at the end, with its `created_at` and `vector_clock` from the Store, and returns it; no other Stream changes](#append-to-end) — AppendEvent.01–.03
+- [Stream open: fails with `EventIdConflict`, carrying the stored Event, if the `event_id` is already used in the Stream](#append-event-id) — AppendEvent.05
+- [Stream open: doesn't check what `data` means](#append-opaque-data) — AppendEvent.07
+- [Stream open, through an API adapter: fails with `InvalidEvent` if the Event is malformed](#append-invalid-event) — AppendEvent.11
+- [Stream closed: fails with `StreamClosed`](#append-closed) — AppendEvent.06
 
 ### [Read Stream]
 
-- [Absent: fails with `StreamNotFound`, not an empty result](#read-absent) — ReadStream.04
-- [Open: returns all Events in append order](#read-open) — ReadStream.01, .02
-- [Closed: still returns its Events](#read-closed) — ReadStream.03
+- [Stream absent: fails with `StreamNotFound`, not an empty result](#read-absent) — ReadStream.04
+- [Stream open: returns all Events in append order](#read-open) — ReadStream.01, .02
+- [Stream closed: still returns its Events](#read-closed) — ReadStream.03
 
 ### [Get Stream]
 
-- [Absent: fails with `StreamNotFound`](#get-absent) — GetStream.03
-- [Open: returns the Stream's record](#get-open) — GetStream.01
-- [Closed: returns the record, with its `closed_at`](#get-closed) — GetStream.02
+- [Stream absent: fails with `StreamNotFound`](#get-absent) — GetStream.03
+- [Stream open: returns the Stream's record](#get-open) — GetStream.01
+- [Stream closed: returns the record, with its `closed_at`](#get-closed) — GetStream.02
 
 ### [Close Stream]
 
-- [Absent: fails with `StreamNotFound`](#close-absent) — CloseStream.03
-- [Open: closes it, with its `closed_at` from the Store's clock, and returns it; its Events are unchanged](#close-open) — CloseStream.02
-- [Closed: no-op — returns it unchanged, keeping its first `closed_at`](#close-closed) — CloseStream.01
+- [Stream absent: fails with `StreamNotFound`](#close-absent) — CloseStream.03
+- [Stream open: closes it, with its `closed_at` from the Store's clock, and returns it; its Events are unchanged](#close-open) — CloseStream.02
+- [Stream closed: no-op — returns it unchanged, keeping its first `closed_at`](#close-closed) — CloseStream.01
 
 ### [Delete Stream]
 
-- [Absent, never created or already deleted: fails with `StreamNotFound`](#delete-absent) — DeleteStream.04
-- [Open: fails with `StreamNotClosed`](#delete-open) — DeleteStream.01
-- [Closed: removes it and its Events, and no other Stream](#delete-closed) — DeleteStream.02, .03
+- [Stream absent, never created or already deleted: fails with `StreamNotFound`](#delete-absent) — DeleteStream.04
+- [Stream open: fails with `StreamNotClosed`](#delete-open) — DeleteStream.01
+- [Stream closed: removes it and its Events, and no other Stream](#delete-closed) — DeleteStream.02, .03
 
 ## Reading the examples
 
