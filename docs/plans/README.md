@@ -33,6 +33,11 @@ Next slices, not planned yet:
   the tests. `AppendEvent.11`'s shape validation lands here, in the adapters
   (decision 0018).
 
+Small tasks
+
+- Review [decisions][../decisions.md], I feel like not all that information
+  is necessary.
+
 Ideas:
 
 - A snapshot test for the public API of the Store, both as documentation and
