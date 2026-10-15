@@ -2,8 +2,8 @@
 
 For coding agents working on Distolocal. Read these first:
 
-- @README.md: what Distolocal is, where things are, and the commands.
-- @CONTRIBUTING.md: the working agreement, the docs and the style.
+- @README.md — what Distolocal is, where things are, and the commands.
+- @CONTRIBUTING.md — the working agreement, the docs and the style.
 
 On top of those:
 
